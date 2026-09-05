@@ -12,15 +12,17 @@ documentación, tests, datos demo, manuales y procedimiento de despliegue.
 
 - [x] Arquitectura y decisiones técnicas (docs 01–04)
 - [x] Auditoría de la especificación (doc 05)
-- [ ] Monorepo + Docker Compose (PostgreSQL)
-- [ ] Esquema Prisma: `companies`, `warehouses`, `users`, `roles`,
+- [x] Monorepo + Docker Compose (PostgreSQL)
+- [x] Esquema Prisma: `companies`, `warehouses`, `users`, `roles`,
       `permissions`, tablas puente, `audit_logs`
-- [ ] Autenticación (login, refresh, logout, recuperación de contraseña)
-- [ ] RBAC (guard de roles + permisos) e interceptor de auditoría
-- [ ] Seed con empresa demo, roles y un usuario por rol
-- [ ] Swagger en `/docs`, health check en `/health`
-- [ ] Web: login + layout con menú lateral + dashboard placeholder
-- [ ] Tests: unit de auth/RBAC, e2e de login
+- [x] Autenticación (login, refresh, logout, recuperación de contraseña)
+- [x] RBAC (guard de roles + permisos) y servicio de auditoría
+- [x] Seed con empresa demo, roles y un usuario por rol
+- [x] Swagger en `/docs`, health check en `/health`
+- [x] Web: login + layout con menú lateral + dashboard placeholder
+- [x] Tests: unit de RBAC (en verde), e2e de login (requiere BD)
+- [ ] Verificación end-to-end contra BD (migración + seed + e2e) — pendiente de
+      `DATABASE_URL` (Postgres en la nube)
 
 **Criterio de aceptación:** un usuario de cada rol puede iniciar sesión; el
 acceso a endpoints respeta permisos; toda acción crítica queda en `audit_logs`.

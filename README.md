@@ -63,6 +63,16 @@ npm run db:seed
 
 # 5. Levantar la API
 npm run dev:api
+
+# 6. En otra terminal, levantar la web
+npm run dev --workspace @agrogood/web
 ```
 
-La documentación interactiva de la API queda en `http://localhost:3000/docs`.
+- API + Swagger interactivo: `http://localhost:3000/docs`
+- Web (login, menú lateral, dashboard): `http://localhost:5173`
+
+Usuarios demo (todos con la contraseña de `SEED_DEMO_PASSWORD`, por defecto
+`Agrogood.2026`), RUT de empresa `76123456-7`:
+`admin@agrogood.cl`, `gerente@agrogood.cl`, `operaciones@agrogood.cl`,
+`compras@agrogood.cl`, `bodega@agrogood.cl`, `picker@agrogood.cl`,
+`despacho@agrogood.cl`, `conductor@agrogood.cl`, `administracion@agrogood.cl`.
