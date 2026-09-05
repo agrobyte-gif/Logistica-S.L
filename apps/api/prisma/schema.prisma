@@ -1,0 +1,220 @@
+// AGROGOOD — Esquema Prisma
+// Fase 1: identidad, seguridad, multi-tenant y auditoría.
+// Las entidades de dominio (CRM, ventas, inventario, etc.) se agregan por fase.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EntityStatus {
+  ACTIVO
+  INACTIVO
+}
+
+/// Empresa / tenant. Toda entidad operativa cuelga de aquí.
+model Company {
+  id             String       @id @default(uuid())
+  rut            String
+  razonSocial    String       @map("razon_social")
+  nombreComercial String?     @map("nombre_comercial")
+  giro           String?
+  direccion      String?
+  estado         EntityStatus @default(ACTIVO)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  users      User[]
+  warehouses Warehouse[]
+  roles      Role[]
+  auditLogs  AuditLog[]
+
+  @@unique([rut])
+  @@map("companies")
+}
+
+/// Bodega perteneciente a una empresa (multi-bodega desde el día uno).
+model Warehouse {
+  id        String       @id @default(uuid())
+  companyId String       @map("company_id")
+  nombre    String
+  tipo      String?
+  direccion String?
+  estado    EntityStatus @default(ACTIVO)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  locations      WarehouseLocation[]
+  userWarehouses UserWarehouse[]
+
+  @@index([companyId])
+  @@map("warehouses")
+}
+
+/// Ubicación física dentro de una bodega (cámara, secos, rack, posición).
+model WarehouseLocation {
+  id          String   @id @default(uuid())
+  warehouseId String   @map("warehouse_id")
+  codigo      String
+  tipo        String?
+  descripcion String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+
+  @@unique([warehouseId, codigo])
+  @@map("warehouse_locations")
+}
+
+/// Usuario del sistema.
+model User {
+  id               String       @id @default(uuid())
+  companyId        String       @map("company_id")
+  nombre           String
+  email            String
+  passwordHash     String       @map("password_hash")
+  estado           EntityStatus @default(ACTIVO)
+  twoFactorSecret  String?      @map("two_factor_secret")
+  twoFactorEnabled Boolean      @default(false) @map("two_factor_enabled")
+  lastLoginAt      DateTime?    @map("last_login_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userRoles      UserRole[]
+  userWarehouses UserWarehouse[]
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordResetToken[]
+  auditLogs      AuditLog[]
+
+  // Email único por empresa (ver auditoría B5): un mismo correo no se repite
+  // dentro de una empresa, pero podría existir en otra.
+  @@unique([companyId, email])
+  @@index([companyId])
+  @@map("users")
+}
+
+/// Rol (RBAC). companyId nulo = rol de sistema/plantilla.
+model Role {
+  id          String   @id @default(uuid())
+  companyId   String?  @map("company_id")
+  nombre      String
+  descripcion String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company         Company?         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@unique([companyId, nombre])
+  @@map("roles")
+}
+
+/// Permiso granular con formato `recurso:accion`.
+model Permission {
+  id          String   @id @default(uuid())
+  clave       String   @unique
+  descripcion String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+/// Alcance por bodega: a qué bodegas puede acceder un usuario (auditoría D3).
+model UserWarehouse {
+  userId      String @map("user_id")
+  warehouseId String @map("warehouse_id")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, warehouseId])
+  @@map("user_warehouses")
+}
+
+/// Refresh token rotatorio (se guarda hash, nunca el token en claro).
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Token de recuperación de contraseña (se guarda hash).
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+/// Bitácora de auditoría — APPEND ONLY.
+/// Sin endpoints de UPDATE/DELETE (prompt §30). En producción se revoca
+/// además el permiso DELETE a nivel de rol de BD de la aplicación.
+model AuditLog {
+  id              String   @id @default(uuid())
+  companyId       String?  @map("company_id")
+  userId          String?  @map("user_id")
+  action          String
+  entityType      String   @map("entity_type")
+  entityId        String?  @map("entity_id")
+  stateBefore     Json?    @map("state_before")
+  stateAfter      Json?    @map("state_after")
+  relatedDocument String?  @map("related_document")
+  ipAddress       String?  @map("ip_address")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("audit_logs")
+}

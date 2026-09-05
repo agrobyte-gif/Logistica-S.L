@@ -1,0 +1,23 @@
+{
+  "name": "agrogood",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AGROGOOD — ERP + CRM + WMS + TMS + Logística",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:shared": "npm run build --workspace @agrogood/shared",
+    "dev:api": "npm run build:shared && npm run start:dev --workspace @agrogood/api",
+    "build": "npm run build:shared && npm run build --workspace @agrogood/api",
+    "db:migrate": "npm run db:migrate --workspace @agrogood/api",
+    "db:seed": "npm run db:seed --workspace @agrogood/api",
+    "db:reset": "npm run db:reset --workspace @agrogood/api",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  }
+}
