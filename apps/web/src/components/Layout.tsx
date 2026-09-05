@@ -37,18 +37,34 @@ function NavRow({ group }: { group: NavGroup }) {
         </button>
         {open && (
           <div className="ml-4 mt-1 space-y-0.5 border-l border-neutral-200 pl-3 dark:border-neutral-800">
-            {group.items!.map((item) => (
-              <div
-                key={item.path}
-                className="flex items-center justify-between rounded-md px-3 py-1.5 text-sm text-neutral-400 dark:text-neutral-500"
-                title={`Disponible en Fase ${item.fase}`}
-              >
-                <span>{item.label}</span>
-                <span className="text-[10px] uppercase tracking-wide">
-                  Fase {item.fase}
-                </span>
-              </div>
-            ))}
+            {group.items!.map((item) =>
+              item.available ? (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `block rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      isActive
+                        ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200'
+                        : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ) : (
+                <div
+                  key={item.path}
+                  className="flex items-center justify-between rounded-md px-3 py-1.5 text-sm text-neutral-400 dark:text-neutral-600"
+                  title={`Disponible en Fase ${item.fase}`}
+                >
+                  <span>{item.label}</span>
+                  <span className="text-[10px] uppercase tracking-wide">
+                    Fase {item.fase}
+                  </span>
+                </div>
+              ),
+            )}
           </div>
         )}
       </div>

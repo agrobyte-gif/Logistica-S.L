@@ -29,10 +29,24 @@ acceso a endpoints respeta permisos; toda acción crítica queda en `audit_logs`
 
 ---
 
-## Fase 2 — CRM, productos y ventas
+## Fase 2 — CRM, productos y ventas 🚧
 CRM (clientes/contactos/direcciones), maestro de productos, listas de precio,
 proveedores, y el módulo de **pedidos** con su máquina de estados y el **control
 automático de stock** (🟢🟡🔴) que crea necesidades de compra.
+
+- [x] Esquema Prisma: customers, addresses, contacts, suppliers, categories,
+      products, product_suppliers, price_lists, product_prices, inventory,
+      sales_orders, sales_order_items, purchase_requests, document_sequences
+- [x] Backend: módulos customers, products (+categorías), suppliers, sales,
+      purchasing (necesidades) — CRUD paginado y multi-tenant
+- [x] Pedidos: numeración atómica (PED-AAAA-######), clasificación de stock,
+      reserva con bloqueo de fila (anti-sobreventa), necesidades automáticas,
+      máquina de estados y línea de tiempo (auditoría)
+- [x] Web: Clientes, Productos, Proveedores, Necesidades, Pedidos (listado,
+      alta y detalle con transiciones y timeline)
+- [x] Tests unit: máquina de estados + clasificación de stock (en verde)
+- [ ] Verificación e2e contra BD (pendiente de `DATABASE_URL`)
+- [ ] Contactos/direcciones de cliente en UI, importación Excel (más adelante)
 
 ## Fase 3 — Inventario, WMS, compras y mermas
 Inventario por ubicación/lote, `inventory_movements` como libro mayor,

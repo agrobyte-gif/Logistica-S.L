@@ -5,12 +5,18 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import configuration from './config/configuration';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuditModule } from './common/audit/audit.module';
+import { SequenceModule } from './common/sequence/sequence.module';
 import { JwtAuthGuard } from './common/auth/jwt-auth.guard';
 import { RbacGuard } from './common/auth/rbac.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from './modules/health/health.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { CustomersModule } from './modules/customers/customers.module';
+import { ProductsModule } from './modules/products/products.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { PurchasingModule } from './modules/purchasing/purchasing.module';
 
 @Module({
   imports: [
@@ -26,10 +32,16 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ]),
     PrismaModule,
     AuditModule,
+    SequenceModule,
     AuthModule,
     UsersModule,
     HealthModule,
     DashboardModule,
+    CustomersModule,
+    ProductsModule,
+    SuppliersModule,
+    SalesModule,
+    PurchasingModule,
   ],
   providers: [
     // Orden importante: rate limit → autenticación → autorización RBAC.

@@ -96,5 +96,16 @@ export const api = {
   get: <T>(path: string) => apiRequest<T>(path),
   post: <T>(path: string, body?: unknown) =>
     apiRequest<T>(path, { method: 'POST', body }),
+  patch: <T>(path: string, body?: unknown) =>
+    apiRequest<T>(path, { method: 'PATCH', body }),
   refresh: tryRefresh,
 };
+
+/** Forma común de las respuestas paginadas del backend. */
+export interface Paginated<T> {
+  data: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
