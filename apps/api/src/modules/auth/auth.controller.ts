@@ -116,7 +116,9 @@ export class AuthController {
       httpOnly: true,
       secure: this.config.get<boolean>('cookieSecure') ?? false,
       sameSite: 'strict' as const,
-      path: '/auth',
+      // Debe coincidir con la ruta real (prefijo global 'api'); si no, el
+      // navegador no envía la cookie en /api/auth/refresh.
+      path: '/api/auth',
     };
   }
 }
