@@ -1,0 +1,50 @@
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Builds
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Entornos y secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Base de datos local / backups
+*.sqlite
+*.sqlite3
+backups/*.sql
+pgdata/
+
+# Cobertura / tests
+coverage/
+.nyc_output/
+
+# Editores / SO
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Móvil
+.expo/
+apps/mobile/.expo/
+
+# Material externo no relacionado con AGROGOOD (referencia local)
+salesforce-skills-main/
+salesforce-skills-main.zip
