@@ -17,6 +17,8 @@ import { ProductsModule } from './modules/products/products.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { PurchasingModule } from './modules/purchasing/purchasing.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { WasteModule } from './modules/waste/waste.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
     SuppliersModule,
     SalesModule,
     PurchasingModule,
+    InventoryModule,
+    WasteModule,
   ],
   providers: [
     // Orden importante: rate limit → autenticación → autorización RBAC.

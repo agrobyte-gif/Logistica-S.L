@@ -48,22 +48,22 @@ export const NAV: NavGroup[] = [
     items: [
       { label: 'Necesidades', path: '/compras/necesidades', available: true, fase: 2 },
       { label: 'Proveedores', path: '/compras/proveedores', available: true, fase: 2 },
-      { label: 'Órdenes', path: '/compras/ordenes', available: false, fase: 3 },
+      { label: 'Órdenes', path: '/compras/ordenes', available: true, fase: 3 },
       { label: 'Recepciones', path: '/compras/recepciones', available: false, fase: 3 },
     ],
   },
   {
     label: 'Bodega',
     icon: '📦',
-    available: false,
+    available: true,
     fase: 3,
     items: [
-      { label: 'Stock', path: '/bodega/stock', available: false, fase: 3 },
-      { label: 'Movimientos', path: '/bodega/movimientos', available: false, fase: 3 },
+      { label: 'Stock', path: '/bodega/stock', available: true, fase: 3 },
+      { label: 'Movimientos', path: '/bodega/movimientos', available: true, fase: 3 },
       { label: 'Picking', path: '/bodega/picking', available: false, fase: 4 },
     ],
   },
-  { label: 'Mermas', icon: '🥬', path: '/mermas', available: false, fase: 3 },
+  { label: 'Mermas', icon: '🥬', path: '/mermas', available: true, fase: 3 },
   {
     label: 'Logística',
     icon: '🚚',

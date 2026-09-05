@@ -48,10 +48,25 @@ automático de stock** (🟢🟡🔴) que crea necesidades de compra.
 - [ ] Verificación e2e contra BD (pendiente de `DATABASE_URL`)
 - [ ] Contactos/direcciones de cliente en UI, importación Excel (más adelante)
 
-## Fase 3 — Inventario, WMS, compras y mermas
+## Fase 3 — Inventario, WMS, compras y mermas 🚧
 Inventario por ubicación/lote, `inventory_movements` como libro mayor,
 transferencias, ajustes, conteos; flujo de compras completo (necesidad →
 solicitud → cotización → aprobación → OC → recepción → stock); módulo de mermas.
+
+- [x] Esquema: inventory_movements (libro mayor append-only), purchase_orders,
+      purchase_order_items, goods_receipts, goods_receipt_items, waste
+- [x] InventoryService.applyMovement: único punto de mutación del stock
+      (proyección + asiento en una transacción con bloqueo de fila) — ADR-009
+- [x] Inventario: stock, movimientos, ajuste (con motivo) y transferencia
+- [x] Compras: crear OC (desde necesidades o manual), aprobación por umbral
+      de monto (§41), recepción que ingresa stock y actualiza la OC
+- [x] Mermas: registro con motivo obligatorio que descuenta stock, resumen
+      por motivo y costo
+- [x] Web: Stock, Movimientos, Mermas, Órdenes de compra (listado, alta,
+      detalle con aprobar/recepcionar)
+- [x] Tests unit: signo de movimiento + umbral de aprobación (en verde)
+- [ ] Ubicaciones/lotes en detalle, conteos cíclicos, cotizaciones (más adelante)
+- [ ] Verificación e2e contra BD (pendiente de `DATABASE_URL`)
 
 ## Fase 4 — Picking, despacho, TMS y app móvil
 App móvil (Expo) para pickers y supervisores; picking con escaneo, faltantes y

@@ -44,6 +44,12 @@ model Company {
   inventory         Inventory[]
   documentSequences DocumentSequence[]
 
+  // Fase 3
+  inventoryMovements InventoryMovement[]
+  purchaseOrders     PurchaseOrder[]
+  goodsReceipts      GoodsReceipt[]
+  waste              Waste[]
+
   @@unique([rut])
   @@map("companies")
 }
@@ -64,6 +70,9 @@ model Warehouse {
   userWarehouses UserWarehouse[]
   inventory      Inventory[]
   salesOrders    SalesOrder[]
+  inventoryMovements InventoryMovement[]
+  goodsReceipts  GoodsReceipt[]
+  waste          Waste[]
 
   @@index([companyId])
   @@map("warehouses")
@@ -374,6 +383,7 @@ model Supplier {
   company          Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
   productSuppliers ProductSupplier[]
   purchaseRequests PurchaseRequest[]
+  purchaseOrders   PurchaseOrder[]
 
   @@unique([companyId, rut])
   @@index([companyId, estado])
@@ -425,11 +435,15 @@ model Product {
 
   company          Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
   category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  prices           ProductPrice[]
-  productSuppliers ProductSupplier[]
-  inventory        Inventory[]
-  orderItems       SalesOrderItem[]
-  purchaseRequests PurchaseRequest[]
+  prices             ProductPrice[]
+  productSuppliers   ProductSupplier[]
+  inventory          Inventory[]
+  orderItems         SalesOrderItem[]
+  purchaseRequests   PurchaseRequest[]
+  inventoryMovements InventoryMovement[]
+  purchaseOrderItems PurchaseOrderItem[]
+  goodsReceiptItems  GoodsReceiptItem[]
+  waste              Waste[]
 
   @@unique([companyId, sku])
   @@index([companyId, estado])
@@ -594,4 +608,170 @@ model DocumentSequence {
 
   @@unique([companyId, tipo, anio])
   @@map("document_sequences")
+}
+
+// ==========================================================================
+// Fase 3 — Inventario (WMS), compras y mermas
+// ==========================================================================
+
+enum InventoryMovementType {
+  ENTRADA
+  SALIDA
+  TRANSFERENCIA
+  AJUSTE
+  MERMA
+  DEVOLUCION
+  RECEPCION
+  DESPACHO
+}
+
+enum PurchaseOrderStatus {
+  BORRADOR
+  APROBADA
+  ENVIADA
+  RECIBIDA_PARCIAL
+  RECIBIDA
+  CANCELADA
+}
+
+enum WasteReason {
+  VENCIMIENTO
+  DANO
+  MANIPULACION
+  DESCOMPOSICION
+  ERROR_PICKING
+  DEVOLUCION
+  ROTURA
+  OTRO
+}
+
+/// Libro mayor de inventario — APPEND ONLY (ADR-009, prompt §37).
+/// Es la fuente de verdad del stock; `inventory.cantidad_*` es una proyección
+/// mantenida en la misma transacción. Nunca se edita ni borra; las
+/// correcciones se registran como movimientos inversos.
+model InventoryMovement {
+  id            String                @id @default(uuid())
+  companyId     String                @map("company_id")
+  warehouseId   String                @map("warehouse_id")
+  productId     String                @map("product_id")
+  tipo          InventoryMovementType
+  cantidad      Decimal               @db.Decimal(14, 3) // con signo
+  costoUnitario Decimal?              @map("costo_unitario") @db.Decimal(14, 2)
+  lote          String?
+  referenciaTipo String?              @map("referencia_tipo")
+  referenciaId  String?               @map("referencia_id")
+  usuarioId     String?               @map("usuario_id")
+  notas         String?
+  createdAt     DateTime              @default(now()) @map("created_at")
+
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, createdAt])
+  @@index([productId, createdAt])
+  @@index([referenciaTipo, referenciaId])
+  @@map("inventory_movements")
+}
+
+/// Orden de compra (prompt §11).
+model PurchaseOrder {
+  id           String              @id @default(uuid())
+  companyId    String              @map("company_id")
+  numero       String
+  supplierId   String              @map("supplier_id")
+  warehouseId  String?             @map("warehouse_id")
+  estado       PurchaseOrderStatus @default(BORRADOR)
+  total        Decimal             @default(0) @db.Decimal(14, 2)
+  notas        String?
+  aprobadaPor  String?             @map("aprobada_por")
+  aprobadaAt   DateTime?           @map("aprobada_at")
+  createdById  String?             @map("created_by")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  company  Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  supplier Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items    PurchaseOrderItem[]
+  receipts GoodsReceipt[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, estado])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String  @id @default(uuid())
+  purchaseOrderId  String  @map("purchase_order_id")
+  productId        String  @map("product_id")
+  cantidad         Decimal @db.Decimal(14, 3)
+  precioUnitario   Decimal @map("precio_unitario") @db.Decimal(14, 2)
+  cantidadRecibida Decimal @default(0) @map("cantidad_recibida") @db.Decimal(14, 3)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_items")
+}
+
+/// Recepción de mercadería contra una orden de compra (prompt §11).
+model GoodsReceipt {
+  id              String   @id @default(uuid())
+  companyId       String   @map("company_id")
+  purchaseOrderId String   @map("purchase_order_id")
+  warehouseId     String   @map("warehouse_id")
+  numero          String
+  recibidoPor     String?  @map("recibido_por")
+  observaciones   String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  company       Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  purchaseOrder PurchaseOrder      @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  warehouse     Warehouse          @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items         GoodsReceiptItem[]
+
+  @@unique([companyId, numero])
+  @@index([purchaseOrderId])
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptItem {
+  id                  String  @id @default(uuid())
+  goodsReceiptId      String  @map("goods_receipt_id")
+  productId           String  @map("product_id")
+  purchaseOrderItemId String? @map("purchase_order_item_id")
+  cantidad            Decimal @db.Decimal(14, 3)
+  costoUnitario       Decimal? @map("costo_unitario") @db.Decimal(14, 2)
+  lote                String?
+
+  goodsReceipt GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([goodsReceiptId])
+  @@map("goods_receipt_items")
+}
+
+/// Merma (prompt §16). Genera un movimiento de inventario tipo MERMA.
+model Waste {
+  id          String      @id @default(uuid())
+  companyId   String      @map("company_id")
+  warehouseId String      @map("warehouse_id")
+  productId   String      @map("product_id")
+  cantidad    Decimal     @db.Decimal(14, 3)
+  motivo      WasteReason
+  lote        String?
+  costo       Decimal?    @db.Decimal(14, 2)
+  fotoUrl     String?     @map("foto_url")
+  observacion String?
+  usuarioId   String?     @map("usuario_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, createdAt])
+  @@index([productId])
+  @@map("waste")
 }

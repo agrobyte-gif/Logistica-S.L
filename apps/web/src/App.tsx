@@ -10,6 +10,12 @@ import { NecesidadesPage } from './pages/NecesidadesPage';
 import { PedidosPage } from './pages/PedidosPage';
 import { NuevoPedidoPage } from './pages/NuevoPedidoPage';
 import { PedidoDetailPage } from './pages/PedidoDetailPage';
+import { StockPage } from './pages/StockPage';
+import { MovimientosPage } from './pages/MovimientosPage';
+import { MermasPage } from './pages/MermasPage';
+import { OrdenesCompraPage } from './pages/OrdenesCompraPage';
+import { NuevaOCPage } from './pages/NuevaOCPage';
+import { OCDetailPage } from './pages/OCDetailPage';
 import { Layout } from './components/Layout';
 
 function FullScreenLoader() {
@@ -49,6 +55,14 @@ export function App() {
         <Route path="/ventas/productos" element={<ProductosPage />} />
         <Route path="/compras/proveedores" element={<ProveedoresPage />} />
         <Route path="/compras/necesidades" element={<NecesidadesPage />} />
+
+        {/* Fase 3 */}
+        <Route path="/bodega/stock" element={<StockPage />} />
+        <Route path="/bodega/movimientos" element={<MovimientosPage />} />
+        <Route path="/mermas" element={<MermasPage />} />
+        <Route path="/compras/ordenes" element={<OrdenesCompraPage />} />
+        <Route path="/compras/ordenes/nueva" element={<NuevaOCPage />} />
+        <Route path="/compras/ordenes/:id" element={<OCDetailPage />} />
 
         <Route path="/:section" element={<PlaceholderPage />} />
         <Route path="/:section/:sub" element={<PlaceholderPage />} />

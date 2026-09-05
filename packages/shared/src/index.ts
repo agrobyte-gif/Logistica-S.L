@@ -70,6 +70,23 @@ export enum Permission {
 
   // Necesidades de compra (se generan automáticamente; flujo completo en Fase 3)
   PURCHASE_REQUEST_READ = 'purchase_request:read',
+
+  // --- Fase 3: Inventario / WMS ---
+  INVENTORY_READ = 'inventory:read',
+  INVENTORY_ADJUST = 'inventory:adjust',
+  INVENTORY_TRANSFER = 'inventory:transfer',
+  INVENTORY_MOVEMENT_READ = 'inventory_movement:read',
+
+  // --- Fase 3: Compras (flujo completo) ---
+  PURCHASE_ORDER_READ = 'purchase_order:read',
+  PURCHASE_ORDER_CREATE = 'purchase_order:create',
+  PURCHASE_ORDER_APPROVE = 'purchase_order:approve',
+  GOODS_RECEIPT_READ = 'goods_receipt:read',
+  GOODS_RECEIPT_CREATE = 'goods_receipt:create',
+
+  // --- Fase 3: Mermas ---
+  WASTE_READ = 'waste:read',
+  WASTE_CREATE = 'waste:create',
 }
 
 /** Estado genérico de entidades. */
@@ -113,20 +130,42 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.SALES_ORDER_TRANSITION,
     Permission.SALES_ORDER_CANCEL,
     Permission.PURCHASE_REQUEST_READ,
+    // Fase 3: aprueba compras e inventario/mermas de lectura.
+    Permission.PURCHASE_ORDER_READ,
+    Permission.PURCHASE_ORDER_APPROVE,
+    Permission.INVENTORY_READ,
+    Permission.INVENTORY_MOVEMENT_READ,
+    Permission.WASTE_READ,
+    Permission.GOODS_RECEIPT_READ,
   ],
   [RoleName.ENCARGADO_COMPRAS]: [
     Permission.DASHBOARD_VIEW,
-    // Fase 2: proveedores y necesidades de compra (flujo completo en Fase 3).
     Permission.SUPPLIER_READ,
     Permission.SUPPLIER_CREATE,
     Permission.SUPPLIER_UPDATE,
     Permission.PRODUCT_READ,
     Permission.PURCHASE_REQUEST_READ,
+    // Fase 3: crea órdenes de compra y ve inventario/recepciones.
+    Permission.PURCHASE_ORDER_READ,
+    Permission.PURCHASE_ORDER_CREATE,
+    Permission.GOODS_RECEIPT_READ,
+    Permission.INVENTORY_READ,
+    Permission.INVENTORY_MOVEMENT_READ,
   ],
   [RoleName.BODEGUERO]: [
     Permission.DASHBOARD_VIEW,
     Permission.WAREHOUSE_READ,
     Permission.PRODUCT_READ,
+    // Fase 3: opera bodega (inventario, recepciones, mermas).
+    Permission.INVENTORY_READ,
+    Permission.INVENTORY_ADJUST,
+    Permission.INVENTORY_TRANSFER,
+    Permission.INVENTORY_MOVEMENT_READ,
+    Permission.GOODS_RECEIPT_READ,
+    Permission.GOODS_RECEIPT_CREATE,
+    Permission.PURCHASE_ORDER_READ,
+    Permission.WASTE_READ,
+    Permission.WASTE_CREATE,
   ],
   [RoleName.PICKER]: [Permission.DASHBOARD_VIEW],
   [RoleName.DESPACHADOR]: [Permission.DASHBOARD_VIEW],
@@ -290,4 +329,90 @@ export enum PurchaseRequestStatus {
 export enum PurchaseRequestOrigin {
   AUTO_STOCK = 'AUTO_STOCK',
   MANUAL = 'MANUAL',
+}
+
+// ==========================================================================
+// Fase 3 — Inventario (WMS), compras y mermas
+// ==========================================================================
+
+/** Tipos de movimiento de inventario (prompt §15). */
+export enum InventoryMovementType {
+  ENTRADA = 'ENTRADA',
+  SALIDA = 'SALIDA',
+  TRANSFERENCIA = 'TRANSFERENCIA',
+  AJUSTE = 'AJUSTE',
+  MERMA = 'MERMA',
+  DEVOLUCION = 'DEVOLUCION',
+  RECEPCION = 'RECEPCION',
+  DESPACHO = 'DESPACHO',
+}
+
+/**
+ * Signo del movimiento sobre el stock físico.
+ * Los positivos suman (ENTRADA/RECEPCION/DEVOLUCION), los negativos restan
+ * (SALIDA/MERMA/DESPACHO). AJUSTE y TRANSFERENCIA llevan su propio signo en la
+ * cantidad, por eso devuelven +1 y el llamador entrega la cantidad con signo.
+ */
+export function movementSign(tipo: InventoryMovementType): 1 | -1 {
+  switch (tipo) {
+    case InventoryMovementType.ENTRADA:
+    case InventoryMovementType.RECEPCION:
+    case InventoryMovementType.DEVOLUCION:
+      return 1;
+    case InventoryMovementType.SALIDA:
+    case InventoryMovementType.MERMA:
+    case InventoryMovementType.DESPACHO:
+      return -1;
+    default:
+      return 1; // AJUSTE / TRANSFERENCIA: cantidad con signo explícito
+  }
+}
+
+/** Estados de una orden de compra (prompt §11). */
+export enum PurchaseOrderStatus {
+  BORRADOR = 'BORRADOR',
+  APROBADA = 'APROBADA',
+  ENVIADA = 'ENVIADA',
+  RECIBIDA_PARCIAL = 'RECIBIDA_PARCIAL',
+  RECIBIDA = 'RECIBIDA',
+  CANCELADA = 'CANCELADA',
+}
+
+/** Motivos de merma (prompt §16). */
+export enum WasteReason {
+  VENCIMIENTO = 'VENCIMIENTO',
+  DANO = 'DANO',
+  MANIPULACION = 'MANIPULACION',
+  DESCOMPOSICION = 'DESCOMPOSICION',
+  ERROR_PICKING = 'ERROR_PICKING',
+  DEVOLUCION = 'DEVOLUCION',
+  ROTURA = 'ROTURA',
+  OTRO = 'OTRO',
+}
+
+/**
+ * Reglas de aprobación de compra por defecto (prompt §41). Los umbrales son
+ * configurables por empresa; esta es la referencia inicial (montos en CLP).
+ * `hasta = null` significa "sin tope superior".
+ */
+export interface ApprovalTier {
+  desde: number;
+  hasta: number | null;
+  rol: RoleName;
+}
+export const DEFAULT_PURCHASE_APPROVAL_TIERS: ApprovalTier[] = [
+  { desde: 0, hasta: 100_000, rol: RoleName.ENCARGADO_COMPRAS },
+  { desde: 100_000, hasta: 500_000, rol: RoleName.JEFE_OPERACIONES },
+  { desde: 500_000, hasta: null, rol: RoleName.GERENTE },
+];
+
+/** Rol mínimo requerido para aprobar una compra de cierto monto. */
+export function requiredApproverRole(
+  monto: number,
+  tiers: ApprovalTier[] = DEFAULT_PURCHASE_APPROVAL_TIERS,
+): RoleName {
+  const tier = tiers.find(
+    (t) => monto >= t.desde && (t.hasta === null || monto < t.hasta),
+  );
+  return tier?.rol ?? RoleName.GERENTE;
 }
