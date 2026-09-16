@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api/client';
 import { PageHeader } from '../components/ui';
+import { RouteMap, type MapMarker } from '../components/RouteMap';
 
 interface LatestPos {
   routeId: string;
@@ -47,6 +48,22 @@ export function GpsPage() {
           {error}
         </div>
       )}
+
+      <div className="mb-4">
+        <RouteMap
+          markers={rows.map<MapMarker>((r) => ({
+            id: r.routeId,
+            lat: Number(r.position.lat),
+            lng: Number(r.position.lng),
+            label: `🚚 ${r.numero}`,
+            sublabel: `${new Date(r.position.recordedAt).toLocaleTimeString('es-CL')}${
+              r.position.velocidad != null
+                ? ` · ${Number(r.position.velocidad).toFixed(0)} km/h`
+                : ''
+            }`,
+          }))}
+        />
+      </div>
 
       {loading ? (
         <p className="py-8 text-center text-neutral-400">Cargando…</p>

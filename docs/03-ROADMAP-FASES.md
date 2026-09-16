@@ -120,7 +120,9 @@ entregas con firma/foto/geolocalización; rechazos; centro de notificaciones por
 **Pendiente en Fase 5 (infra/decisiones):**
 - [ ] Colas Redis/BullMQ para GPS de alto volumen y notificaciones (requiere
       Redis; interfaz preparada)
-- [ ] Tiempo real (WebSocket/SSE) y mapa interactivo (requiere proveedor de mapas)
+- [x] **Mapa interactivo** con Leaflet + OpenStreetMap (sin API key ni
+      proveedor de pago; verificado con marcador de vehículo en vivo)
+- [ ] Tiempo real (WebSocket/SSE) — en curso
 - [ ] Push a móvil (FCM) — junto con la app del conductor
 
 ## Fase 6 — Caja chica, finanzas y facturación ✅
