@@ -62,6 +62,13 @@ model Company {
   gpsPositions  GpsPosition[]
   notifications Notification[]
 
+  // Fase 6
+  cashRegisters    CashRegister[]
+  invoices         Invoice[]
+  payments         Payment[]
+  supplierInvoices SupplierInvoice[]
+  supplierPayments SupplierPayment[]
+
   @@unique([rut])
   @@map("companies")
 }
@@ -335,6 +342,7 @@ model Customer {
   addresses CustomerAddress[]
   contacts  CustomerContact[]
   salesOrders SalesOrder[]
+  invoices    Invoice[]
 
   // RUT único por empresa (auditoría B5): un mismo RUT puede ser cliente en
   // otra empresa, o proveedor en la misma.
@@ -400,6 +408,7 @@ model Supplier {
   productSuppliers ProductSupplier[]
   purchaseRequests PurchaseRequest[]
   purchaseOrders   PurchaseOrder[]
+  supplierInvoices SupplierInvoice[]
 
   @@unique([companyId, rut])
   @@index([companyId, estado])
@@ -568,6 +577,7 @@ model SalesOrder {
   qualityChecks    QualityCheck[]
   routeStops       RouteStop[]
   deliveries       Delivery[]
+  invoices         Invoice[]
 
   @@unique([companyId, numero])
   @@index([companyId, estado])
@@ -717,6 +727,7 @@ model PurchaseOrder {
   supplier Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   items    PurchaseOrderItem[]
   receipts GoodsReceipt[]
+  supplierInvoices SupplierInvoice[]
 
   @@unique([companyId, numero])
   @@index([companyId, estado])
@@ -1131,4 +1142,169 @@ model Notification {
   @@index([userId, leidaAt])
   @@index([companyId, createdAt])
   @@map("notifications")
+}
+
+// ==========================================================================
+// Fase 6 — Caja chica, finanzas y facturación (registro de DTE)
+// ==========================================================================
+
+enum CashRegisterStatus {
+  ABIERTA
+  CERRADA
+}
+
+enum CashMovementType {
+  INGRESO
+  EGRESO
+}
+
+enum DteType {
+  FACTURA
+  BOLETA
+  NOTA_CREDITO
+  NOTA_DEBITO
+}
+
+enum DocumentStatus {
+  EMITIDA
+  PAGADA_PARCIAL
+  PAGADA
+  ANULADA
+}
+
+/// Caja chica (prompt §24). Un responsable abre una caja con saldo inicial,
+/// registra ingresos/egresos y la cierra (rendición).
+model CashRegister {
+  id            String             @id @default(uuid())
+  companyId     String             @map("company_id")
+  nombre        String
+  responsableId String?            @map("responsable_id")
+  estado        CashRegisterStatus @default(ABIERTA)
+  saldoInicial  Decimal            @default(0) @map("saldo_inicial") @db.Decimal(14, 2)
+  saldoActual   Decimal            @default(0) @map("saldo_actual") @db.Decimal(14, 2)
+  abiertaAt     DateTime           @default(now()) @map("abierta_at")
+  cerradaAt     DateTime?          @map("cerrada_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  movements CashMovement[]
+
+  @@index([companyId, estado])
+  @@map("cash_registers")
+}
+
+model CashMovement {
+  id             String           @id @default(uuid())
+  cashRegisterId String           @map("cash_register_id")
+  tipo           CashMovementType
+  categoria      String?
+  monto          Decimal          @db.Decimal(14, 2)
+  descripcion    String?
+  comprobanteUrl String?          @map("comprobante_url")
+  usuarioId      String?          @map("usuario_id")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Restrict)
+
+  @@index([cashRegisterId, createdAt])
+  @@map("cash_movements")
+}
+
+/// Documento tributario de venta (DTE). NOTA: la EMISIÓN es manual en el portal
+/// del SII (ADR-007); aquí solo se REGISTRA para CxC y trazabilidad.
+model Invoice {
+  id            String         @id @default(uuid())
+  companyId     String         @map("company_id")
+  customerId    String         @map("customer_id")
+  salesOrderId  String?        @map("sales_order_id")
+  tipoDte       DteType        @map("tipo_dte")
+  folio         String
+  estado        DocumentStatus @default(EMITIDA)
+  neto          Decimal        @db.Decimal(14, 2)
+  iva           Decimal        @default(0) @db.Decimal(14, 2)
+  total         Decimal        @db.Decimal(14, 2)
+  pagado        Decimal        @default(0) @db.Decimal(14, 2)
+  fechaEmision  DateTime       @default(now()) @map("fecha_emision")
+  fechaVencim   DateTime?      @map("fecha_vencimiento")
+  xmlUrl        String?        @map("xml_url")
+  pdfUrl        String?        @map("pdf_url")
+  notas         String?
+  createdById   String?        @map("created_by")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  salesOrder SalesOrder? @relation(fields: [salesOrderId], references: [id], onDelete: SetNull)
+  payments   Payment[]
+
+  // Folio único por empresa y tipo (evita duplicar el mismo DTE).
+  @@unique([companyId, tipoDte, folio])
+  @@index([companyId, estado])
+  @@index([customerId])
+  @@map("invoices")
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  invoiceId     String   @map("invoice_id")
+  monto         Decimal  @db.Decimal(14, 2)
+  medio         String?
+  fecha         DateTime @default(now())
+  registradoPor String?  @map("registrado_por")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+/// Factura de proveedor (Cuentas por Pagar).
+model SupplierInvoice {
+  id              String         @id @default(uuid())
+  companyId       String         @map("company_id")
+  supplierId      String         @map("supplier_id")
+  purchaseOrderId String?        @map("purchase_order_id")
+  folio           String
+  estado          DocumentStatus @default(EMITIDA)
+  neto            Decimal        @db.Decimal(14, 2)
+  iva             Decimal        @default(0) @db.Decimal(14, 2)
+  total           Decimal        @db.Decimal(14, 2)
+  pagado          Decimal        @default(0) @db.Decimal(14, 2)
+  fechaEmision    DateTime       @default(now()) @map("fecha_emision")
+  fechaVencim     DateTime?      @map("fecha_vencimiento")
+  notas           String?
+  createdById     String?        @map("created_by")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  supplier      Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  purchaseOrder PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  payments      SupplierPayment[]
+
+  @@unique([companyId, supplierId, folio])
+  @@index([companyId, estado])
+  @@map("supplier_invoices")
+}
+
+model SupplierPayment {
+  id                String   @id @default(uuid())
+  companyId         String   @map("company_id")
+  supplierInvoiceId String   @map("supplier_invoice_id")
+  monto             Decimal  @db.Decimal(14, 2)
+  medio             String?
+  fecha             DateTime @default(now())
+  registradoPor     String?  @map("registrado_por")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  supplierInvoice SupplierInvoice @relation(fields: [supplierInvoiceId], references: [id], onDelete: Restrict)
+
+  @@index([supplierInvoiceId])
+  @@map("supplier_payments")
 }

@@ -145,3 +145,26 @@ export function formatCLP(value: number | string | null | undefined): string {
   const n = typeof value === 'string' ? Number(value) : value;
   return n.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
+
+const AGING_COLORS: Record<string, string> = {
+  PAGADO: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  VIGENTE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  POR_VENCER:
+    'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  VENCIDO: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+};
+
+export function AgingBadge({ aging }: { aging: string }) {
+  const cls =
+    AGING_COLORS[aging] ??
+    'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300';
+  const dot =
+    aging === 'VENCIDO' ? '🔴' : aging === 'POR_VENCER' ? '🟠' : '🟢';
+  return (
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}
+    >
+      {dot} {aging.replace(/_/g, ' ')}
+    </span>
+  );
+}

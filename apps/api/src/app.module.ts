@@ -26,6 +26,9 @@ import { RoutingModule } from './modules/routing/routing.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { GpsModule } from './modules/gps/gps.module';
 import { DeliveriesModule } from './modules/deliveries/deliveries.module';
+import { CashModule } from './modules/cash/cash.module';
+import { InvoicingModule } from './modules/invoicing/invoicing.module';
+import { FinanceModule } from './modules/finance/finance.module';
 
 @Module({
   imports: [
@@ -60,6 +63,9 @@ import { DeliveriesModule } from './modules/deliveries/deliveries.module';
     NotificationsModule,
     GpsModule,
     DeliveriesModule,
+    CashModule,
+    InvoicingModule,
+    FinanceModule,
   ],
   providers: [
     // Orden importante: rate limit → autenticación → autorización RBAC.

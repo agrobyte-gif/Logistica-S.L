@@ -123,10 +123,25 @@ entregas con firma/foto/geolocalización; rechazos; centro de notificaciones por
 - [ ] Tiempo real (WebSocket/SSE) y mapa interactivo (requiere proveedor de mapas)
 - [ ] Push a móvil (FCM) — junto con la app del conductor
 
-## Fase 6 — Caja chica, finanzas y facturación SII
-Caja chica con rendición y cierre; cuentas por cobrar/pagar; **integración de
-facturación electrónica SII a través de proveedor autorizado** (ver ADR y doc 05
-para riesgos y verificación de documentación vigente antes de implementar).
+## Fase 6 — Caja chica, finanzas y facturación ✅
+Caja chica con rendición y cierre; cuentas por cobrar/pagar; **facturación como
+registro de DTE** (emisión manual en el portal del SII — decisión del cliente,
+ADR-007 actualizado; sin proveedor externo ni API).
+
+- [x] Esquema: cash_registers, cash_movements, invoices, payments,
+      supplier_invoices, supplier_payments (+ enums)
+- [x] Contratos compartidos: permisos + enums (DteType, DocumentStatus, etc.) y
+      funciones puras (computeTax, computeDocumentStatus, agingStatus)
+- [x] Caja chica: abrir, ingresos/egresos que afectan saldo en transacción,
+      cierre, gastos por categoría (no permite saldo negativo)
+- [x] Facturación (CxC): registrar DTE (calcula IVA), pagos/abonos que actualizan
+      saldo y estado, anulación (sin pagos); folio único por tipo
+- [x] Finanzas: Cuentas por Cobrar y por Pagar con semáforo de vencimiento
+      (🟢🟠🔴), facturas de proveedor y sus pagos, KPIs financieros
+- [x] Web: Caja chica, Facturación, CxC, CxP
+- [x] Fix: `start:prod` apuntaba a `dist/main.js` → `dist/apps/api/src/main.js`
+- [x] Tests unit: computeTax/estado/aging (en verde, 40 total)
+- [x] Verificado build API + web; e2e contra BD real (fases 1-5) en verde
 
 ## Fase 7 — BI, reportes y KPIs
 Dashboard gerencial y **Control Tower** en tiempo real; reportes exportables

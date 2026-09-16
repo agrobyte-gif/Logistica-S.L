@@ -26,6 +26,10 @@ import { ConductoresPage } from './pages/ConductoresPage';
 import { EntregasPage } from './pages/EntregasPage';
 import { GpsPage } from './pages/GpsPage';
 import { NotificacionesPage } from './pages/NotificacionesPage';
+import { CajaPage } from './pages/CajaPage';
+import { FacturacionPage } from './pages/FacturacionPage';
+import { CuentasCobrarPage } from './pages/CuentasCobrarPage';
+import { CuentasPagarPage } from './pages/CuentasPagarPage';
 import { Layout } from './components/Layout';
 
 function FullScreenLoader() {
@@ -87,6 +91,12 @@ export function App() {
         <Route path="/logistica/entregas" element={<EntregasPage />} />
         <Route path="/logistica/gps" element={<GpsPage />} />
         <Route path="/notificaciones" element={<NotificacionesPage />} />
+
+        {/* Fase 6 */}
+        <Route path="/finanzas/caja" element={<CajaPage />} />
+        <Route path="/finanzas/cxc" element={<CuentasCobrarPage />} />
+        <Route path="/finanzas/cxp" element={<CuentasPagarPage />} />
+        <Route path="/facturacion" element={<FacturacionPage />} />
 
         <Route path="/:section" element={<PlaceholderPage />} />
         <Route path="/:section/:sub" element={<PlaceholderPage />} />

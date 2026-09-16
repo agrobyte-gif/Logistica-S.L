@@ -113,6 +113,20 @@ export enum Permission {
   DELIVERY_EXECUTE = 'delivery:execute', // el conductor confirma/rechaza entrega
   GPS_READ = 'gps:read',
   GPS_REPORT = 'gps:report', // la app del conductor reporta posición
+
+  // --- Fase 6: Caja chica ---
+  CASH_READ = 'cash:read',
+  CASH_MANAGE = 'cash:manage', // abrir/cerrar caja, registrar movimientos
+
+  // --- Fase 6: Facturación (registro de DTE emitidos en el SII) ---
+  INVOICE_READ = 'invoice:read',
+  INVOICE_MANAGE = 'invoice:manage', // registrar/anular DTE
+  PAYMENT_REGISTER = 'payment:register', // registrar pagos/abonos de clientes
+
+  // --- Fase 6: Finanzas (CxC / CxP) ---
+  FINANCE_READ = 'finance:read',
+  PAYABLE_READ = 'payable:read',
+  PAYABLE_MANAGE = 'payable:manage', // facturas de proveedor y sus pagos
 }
 
 /** Estado genérico de entidades. */
@@ -149,6 +163,13 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.ROUTE_READ,
     Permission.VEHICLE_READ,
     Permission.DRIVER_READ,
+    // Fase 5-6: seguimiento comercial y financiero.
+    Permission.DELIVERY_READ,
+    Permission.GPS_READ,
+    Permission.FINANCE_READ,
+    Permission.INVOICE_READ,
+    Permission.PAYABLE_READ,
+    Permission.CASH_READ,
   ],
   [RoleName.JEFE_OPERACIONES]: [
     Permission.DASHBOARD_VIEW,
@@ -256,6 +277,19 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.DASHBOARD_VIEW,
     Permission.USER_READ,
     Permission.AUDIT_READ,
+    // Fase 6: administración financiera completa.
+    Permission.CASH_READ,
+    Permission.CASH_MANAGE,
+    Permission.INVOICE_READ,
+    Permission.INVOICE_MANAGE,
+    Permission.PAYMENT_REGISTER,
+    Permission.PAYABLE_READ,
+    Permission.PAYABLE_MANAGE,
+    Permission.FINANCE_READ,
+    // Ve clientes/proveedores/pedidos para asociar documentos.
+    Permission.CUSTOMER_READ,
+    Permission.SUPPLIER_READ,
+    Permission.SALES_ORDER_READ,
   ],
 };
 
@@ -693,4 +727,100 @@ export function resolveDeliveryStatus(
   if (entregados === 0) return DeliveryStatus.RECHAZADO;
   if (entregados === items.length) return DeliveryStatus.ENTREGADO;
   return DeliveryStatus.RECHAZADO_PARCIAL;
+}
+
+// ==========================================================================
+// Fase 6 — Caja chica, finanzas y facturación (registro de DTE)
+// ==========================================================================
+
+export enum CashRegisterStatus {
+  ABIERTA = 'ABIERTA',
+  CERRADA = 'CERRADA',
+}
+
+export enum CashMovementType {
+  INGRESO = 'INGRESO',
+  EGRESO = 'EGRESO',
+}
+
+/** Tipo de documento tributario electrónico (código SII). */
+export enum DteType {
+  FACTURA = 'FACTURA', // 33
+  BOLETA = 'BOLETA', // 39
+  NOTA_CREDITO = 'NOTA_CREDITO', // 61
+  NOTA_DEBITO = 'NOTA_DEBITO', // 56
+}
+
+/** Código numérico SII por tipo de DTE. */
+export const DTE_CODE: Record<DteType, number> = {
+  [DteType.FACTURA]: 33,
+  [DteType.BOLETA]: 39,
+  [DteType.NOTA_CREDITO]: 61,
+  [DteType.NOTA_DEBITO]: 56,
+};
+
+/** Estado de cobro/pago de un documento. */
+export enum DocumentStatus {
+  EMITIDA = 'EMITIDA',
+  PAGADA_PARCIAL = 'PAGADA_PARCIAL',
+  PAGADA = 'PAGADA',
+  ANULADA = 'ANULADA',
+}
+
+/** IVA vigente en Chile (configurable a futuro). */
+export const IVA_RATE = 0.19;
+
+/**
+ * Calcula neto/IVA/total a partir de un monto neto y si está afecto a IVA.
+ * Redondea el IVA al peso (CLP no usa decimales). Función pura.
+ */
+export function computeTax(
+  neto: number,
+  afecto = true,
+): { neto: number; iva: number; total: number } {
+  const netoR = Math.round(neto);
+  const iva = afecto ? Math.round(netoR * IVA_RATE) : 0;
+  return { neto: netoR, iva, total: netoR + iva };
+}
+
+/**
+ * Deriva el estado de un documento según lo pagado. Función pura.
+ */
+export function computeDocumentStatus(
+  total: number,
+  pagado: number,
+): DocumentStatus {
+  if (pagado <= 0) return DocumentStatus.EMITIDA;
+  if (pagado >= total) return DocumentStatus.PAGADA;
+  return DocumentStatus.PAGADA_PARCIAL;
+}
+
+/** Semáforo de vencimiento para cuentas por cobrar/pagar (prompt §25). */
+export enum AgingStatus {
+  PAGADO = 'PAGADO', // 🟢 saldo 0
+  VIGENTE = 'VIGENTE', // 🟢 no vencido
+  POR_VENCER = 'POR_VENCER', // 🟠 vence dentro de `warnDays`
+  VENCIDO = 'VENCIDO', // 🔴 pasado el vencimiento
+}
+
+/**
+ * Clasifica un documento por su vencimiento y saldo. Función pura.
+ * @param saldo saldo pendiente (total - pagado)
+ * @param vencimiento fecha de vencimiento (o null si no aplica)
+ * @param hoy fecha de referencia
+ * @param warnDays días de antelación para "por vencer" (default 5)
+ */
+export function agingStatus(
+  saldo: number,
+  vencimiento: Date | null,
+  hoy: Date = new Date(),
+  warnDays = 5,
+): AgingStatus {
+  if (saldo <= 0) return AgingStatus.PAGADO;
+  if (!vencimiento) return AgingStatus.VIGENTE;
+  const ms = vencimiento.getTime() - hoy.getTime();
+  const dias = Math.ceil(ms / 86_400_000);
+  if (dias < 0) return AgingStatus.VENCIDO;
+  if (dias <= warnDays) return AgingStatus.POR_VENCER;
+  return AgingStatus.VIGENTE;
 }

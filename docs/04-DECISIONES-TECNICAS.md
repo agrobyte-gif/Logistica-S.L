@@ -82,23 +82,28 @@ cámara/GPS/escáner, un ecosistema.
 config nativa.
 **Impacto futuro:** base común TS facilita features compartidas.
 
-## ADR-007 — Facturación electrónica SII vía proveedor autorizado 🔵
-**Qué:** integrar DTE (33/39/61/56) a través de un **proveedor certificado**
-(PSTC/OSA), detrás de la interfaz `InvoicingService`; **no** implementar la
-comunicación directa con el SII al inicio.
-**Por qué:** la emisión directa exige firma electrónica, gestión de folios (CAF),
-timbre electrónico y certificación formal ante el SII — alto costo y riesgo. El
-prompt es explícito: **"No inventar APIs. Verificar la documentación técnica
-vigente antes de implementar."**
-**Alternativas:** integración directa con el SII (mayor control, mucho más
-esfuerzo y certificación).
-**Ventajas:** menor time-to-market, cumplimiento delegado, menos superficie
-regulatoria propia.
-**Desventajas:** costo por documento del proveedor; acoplamiento a su API
-(mitigado por la interfaz).
-**Impacto futuro / ⚠️ requiere decisión del cliente:** elegir proveedor. **No se
-implementará ninguna integración real hasta confirmar proveedor y revisar su
-documentación vigente.** Ver doc 05 §Facturación.
+## ADR-007 — Facturación: emisión manual en el portal del SII; el sistema solo REGISTRA ✅
+**Decisión del cliente (2026-09-16):** la facturación electrónica se emitirá
+**manualmente en el portal del SII** (Factura Electrónica MIPYME, sii.cl). AGROGOOD
+**no** integrará un proveedor autorizado ni la API del SII.
+**Qué implica en el sistema:** el módulo de facturación es un **registro y
+seguimiento** de documentos tributarios ya emitidos en el SII, no un emisor:
+- Se registran los DTE (tipo 33 factura, 39 boleta, 61 NC, 56 ND) con folio,
+  montos (neto/IVA/total), fecha de emisión y vencimiento, cliente y pedido
+  asociado, y estado.
+- Se puede adjuntar el **PDF/XML** descargado del SII (vía `FileStorageService`).
+- El documento registrado alimenta **Cuentas por Cobrar** y la trazabilidad del
+  pedido (§53).
+**Por qué:** la emisión directa exige firma electrónica, folios (CAF), timbre y
+certificación formal; un proveedor externo añade costo y dependencia. El portal
+MIPYME del SII es gratuito y suficiente para la operación de AGROGOOD.
+**Ventajas:** cero dependencia/costo externo, sin "inventar APIs", implementación
+simple, desbloquea la Fase 6 de inmediato.
+**Desventajas:** el folio se transcribe/registra manualmente (mitigable con
+importación futura del XML). Sin emisión automática.
+**Impacto futuro:** si algún día se quiere emisión automática, se añade detrás de
+un `InvoicingService` sin cambiar el modelo de datos (los DTE ya están modelados).
+Se **descarta** la dependencia de proveedor autorizado que contemplaba este ADR.
 
 ## ADR-008 — Dinero como enteros/`Decimal`, nunca `float` ✅
 **Qué:** montos en `Decimal(14,2)` (o enteros en centavos); cantidades en
