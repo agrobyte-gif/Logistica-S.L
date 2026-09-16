@@ -143,10 +143,17 @@ ADR-007 actualizado; sin proveedor externo ni API).
 - [x] Tests unit: computeTax/estado/aging (en verde, 40 total)
 - [x] Verificado build API + web; e2e contra BD real (fases 1-5) en verde
 
-## Fase 7 — BI, reportes y KPIs
-Dashboard gerencial y **Control Tower** en tiempo real; reportes exportables
-(Excel/CSV/PDF); módulo BI (márgenes, rentabilidad por ruta/cliente/producto,
-productividad).
+## Fase 7 — BI, reportes y KPIs ✅
+Dashboard gerencial y **Control Tower**; reportes exportables; módulo BI.
+
+- [x] DashboardService con KPIs reales (ventas hoy, pedidos por estado,
+      entregas, stock crítico, compras pendientes, merma, caja, CxC/CxP)
+- [x] Control Tower: contadores operativos en vivo + alertas (refresco 20s)
+- [x] Reportes: ventas por cliente/producto, compras por proveedor, mermas por
+      motivo, stock/inventario — con **export CSV** (BOM, apto Excel-es)
+- [x] Web: Dashboard renovado, Control Tower, Reportes (con descarga CSV)
+- [x] Verificado contra BD real (KPIs, control-tower y CSV)
+- [ ] Export PDF/XLSX nativo y BI avanzado (rentabilidad por ruta) — futuro
 
 ## Fase 8 — Inteligencia artificial
 Predicción de demanda/compras/merma, detección de anomalías, recomendación de

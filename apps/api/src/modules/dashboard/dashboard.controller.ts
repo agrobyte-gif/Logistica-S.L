@@ -6,40 +6,25 @@ import {
   RequirePermissions,
 } from '../../common/auth/decorators';
 import { AuthUser } from '../../common/auth/auth.types';
-import { PrismaService } from '../../common/prisma/prisma.service';
+import { DashboardService } from './dashboard.service';
 
-/**
- * Dashboard básico de Fase 1. Los KPIs reales (ventas, pedidos, stock, etc.,
- * prompt §27) se conectan a medida que existan sus módulos en fases siguientes.
- */
 @ApiTags('dashboard')
 @ApiBearerAuth()
 @Controller('dashboard')
 export class DashboardController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly dashboard: DashboardService) {}
 
   @Get('summary')
   @RequirePermissions(Permission.DASHBOARD_VIEW)
-  @ApiOperation({ summary: 'Resumen del dashboard (placeholder Fase 1)' })
-  async summary(@CurrentUser() user: AuthUser) {
-    const [usuarios, bodegas] = await Promise.all([
-      this.prisma.user.count({ where: { companyId: user.companyId } }),
-      this.prisma.warehouse.count({ where: { companyId: user.companyId } }),
-    ]);
+  @ApiOperation({ summary: 'KPIs del dashboard gerencial (datos reales)' })
+  summary(@CurrentUser() user: AuthUser) {
+    return this.dashboard.summary(user.companyId);
+  }
 
-    return {
-      companyId: user.companyId,
-      kpis: {
-        usuarios,
-        bodegas,
-        // KPIs pendientes de fases posteriores (se muestran como null en la UI):
-        ventasHoy: null,
-        pedidosHoy: null,
-        pedidosPendientes: null,
-        stockCritico: null,
-      },
-      fase: 1,
-      nota: 'KPIs operativos disponibles conforme avancen las fases 2-7.',
-    };
+  @Get('control-tower')
+  @RequirePermissions(Permission.CONTROL_TOWER_VIEW)
+  @ApiOperation({ summary: 'Control Tower: operación en vivo + alertas' })
+  controlTower(@CurrentUser() user: AuthUser) {
+    return this.dashboard.controlTower(user.companyId);
   }
 }

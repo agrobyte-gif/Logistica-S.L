@@ -30,6 +30,8 @@ import { CajaPage } from './pages/CajaPage';
 import { FacturacionPage } from './pages/FacturacionPage';
 import { CuentasCobrarPage } from './pages/CuentasCobrarPage';
 import { CuentasPagarPage } from './pages/CuentasPagarPage';
+import { ControlTowerPage } from './pages/ControlTowerPage';
+import { ReportesPage } from './pages/ReportesPage';
 import { Layout } from './components/Layout';
 
 function FullScreenLoader() {
@@ -97,6 +99,10 @@ export function App() {
         <Route path="/finanzas/cxc" element={<CuentasCobrarPage />} />
         <Route path="/finanzas/cxp" element={<CuentasPagarPage />} />
         <Route path="/facturacion" element={<FacturacionPage />} />
+
+        {/* Fase 7 */}
+        <Route path="/control-tower" element={<ControlTowerPage />} />
+        <Route path="/reportes" element={<ReportesPage />} />
 
         <Route path="/:section" element={<PlaceholderPage />} />
         <Route path="/:section/:sub" element={<PlaceholderPage />} />

@@ -29,6 +29,7 @@ import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { CashModule } from './modules/cash/cash.module';
 import { InvoicingModule } from './modules/invoicing/invoicing.module';
 import { FinanceModule } from './modules/finance/finance.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { FinanceModule } from './modules/finance/finance.module';
     CashModule,
     InvoicingModule,
     FinanceModule,
+    ReportsModule,
   ],
   providers: [
     // Orden importante: rate limit → autenticación → autorización RBAC.

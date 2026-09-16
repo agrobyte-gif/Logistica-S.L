@@ -127,6 +127,10 @@ export enum Permission {
   FINANCE_READ = 'finance:read',
   PAYABLE_READ = 'payable:read',
   PAYABLE_MANAGE = 'payable:manage', // facturas de proveedor y sus pagos
+
+  // --- Fase 7: BI, reportes y Control Tower ---
+  REPORTS_VIEW = 'reports:view',
+  CONTROL_TOWER_VIEW = 'control_tower:view',
 }
 
 /** Estado genérico de entidades. */
@@ -170,6 +174,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.INVOICE_READ,
     Permission.PAYABLE_READ,
     Permission.CASH_READ,
+    // Fase 7: BI y torre de control.
+    Permission.REPORTS_VIEW,
+    Permission.CONTROL_TOWER_VIEW,
   ],
   [RoleName.JEFE_OPERACIONES]: [
     Permission.DASHBOARD_VIEW,
@@ -206,6 +213,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     // Fase 5: seguimiento de entregas y GPS.
     Permission.DELIVERY_READ,
     Permission.GPS_READ,
+    // Fase 7: torre de control operacional y reportes.
+    Permission.CONTROL_TOWER_VIEW,
+    Permission.REPORTS_VIEW,
   ],
   [RoleName.ENCARGADO_COMPRAS]: [
     Permission.DASHBOARD_VIEW,
@@ -290,6 +300,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.CUSTOMER_READ,
     Permission.SUPPLIER_READ,
     Permission.SALES_ORDER_READ,
+    // Fase 7: reportes financieros.
+    Permission.REPORTS_VIEW,
   ],
 };
 
