@@ -107,6 +107,12 @@ export enum Permission {
   VEHICLE_MANAGE = 'vehicle:manage',
   DRIVER_READ = 'driver:read',
   DRIVER_MANAGE = 'driver:manage',
+
+  // --- Fase 5: Entregas, GPS y notificaciones ---
+  DELIVERY_READ = 'delivery:read',
+  DELIVERY_EXECUTE = 'delivery:execute', // el conductor confirma/rechaza entrega
+  GPS_READ = 'gps:read',
+  GPS_REPORT = 'gps:report', // la app del conductor reporta posición
 }
 
 /** Estado genérico de entidades. */
@@ -176,6 +182,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.VEHICLE_MANAGE,
     Permission.DRIVER_READ,
     Permission.DRIVER_MANAGE,
+    // Fase 5: seguimiento de entregas y GPS.
+    Permission.DELIVERY_READ,
+    Permission.GPS_READ,
   ],
   [RoleName.ENCARGADO_COMPRAS]: [
     Permission.DASHBOARD_VIEW,
@@ -231,11 +240,17 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.ROUTE_READ,
     Permission.VEHICLE_READ,
     Permission.DRIVER_READ,
+    // Fase 5: sigue entregas y GPS de la flota.
+    Permission.DELIVERY_READ,
+    Permission.GPS_READ,
   ],
   [RoleName.CONDUCTOR]: [
     Permission.DASHBOARD_VIEW,
-    // Ve sus rutas asignadas; la app del conductor llega en Fase 5.
+    // Ve sus rutas asignadas y, en Fase 5, ejecuta entregas y reporta GPS.
     Permission.ROUTE_READ,
+    Permission.DELIVERY_READ,
+    Permission.DELIVERY_EXECUTE,
+    Permission.GPS_REPORT,
   ],
   [RoleName.ADMINISTRACION]: [
     Permission.DASHBOARD_VIEW,
@@ -261,6 +276,8 @@ export enum AuditAction {
   PICKING_STATE_CHANGE = 'PICKING_STATE_CHANGE',
   QUALITY_CHECK_RECORDED = 'QUALITY_CHECK_RECORDED',
   ROUTE_STATE_CHANGE = 'ROUTE_STATE_CHANGE',
+  // Fase 5
+  DELIVERY_RECORDED = 'DELIVERY_RECORDED',
 }
 
 // ==========================================================================
@@ -629,4 +646,51 @@ export function resolvePickingOutcome(
       !pickingItemHasDifference(it) && it.estado === PickingItemStatus.OK,
   );
   return completo ? PickingStatus.COMPLETADO : PickingStatus.INCOMPLETO;
+}
+
+// ==========================================================================
+// Fase 5 — Entregas, GPS y notificaciones
+// ==========================================================================
+
+/** Resultado de la entrega en un cliente (prompt §23). */
+export enum DeliveryStatus {
+  ENTREGADO = 'ENTREGADO',
+  RECHAZADO_PARCIAL = 'RECHAZADO_PARCIAL',
+  RECHAZADO = 'RECHAZADO',
+}
+
+/** Estado por producto entregado/rechazado. */
+export enum DeliveryItemStatus {
+  ENTREGADO = 'ENTREGADO',
+  RECHAZADO = 'RECHAZADO',
+}
+
+/** Tipo de evidencia de entrega (prompt §23). */
+export enum DeliveryEvidenceType {
+  FIRMA = 'FIRMA',
+  FOTO = 'FOTO',
+}
+
+/** Prioridad/nivel de una notificación (prompt §28-29). */
+export enum NotificationLevel {
+  INFO = 'INFO',
+  WARN = 'WARN',
+  CRITICAL = 'CRITICAL',
+}
+
+/**
+ * Deriva el estado de entrega a partir de las líneas: todo entregado →
+ * ENTREGADO; nada entregado → RECHAZADO; mezcla → RECHAZADO_PARCIAL.
+ * Función pura → testeable.
+ */
+export function resolveDeliveryStatus(
+  items: { status: DeliveryItemStatus }[],
+): DeliveryStatus {
+  if (items.length === 0) return DeliveryStatus.ENTREGADO;
+  const entregados = items.filter(
+    (i) => i.status === DeliveryItemStatus.ENTREGADO,
+  ).length;
+  if (entregados === 0) return DeliveryStatus.RECHAZADO;
+  if (entregados === items.length) return DeliveryStatus.ENTREGADO;
+  return DeliveryStatus.RECHAZADO_PARCIAL;
 }

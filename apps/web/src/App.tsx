@@ -23,6 +23,9 @@ import { RutasPage } from './pages/RutasPage';
 import { RutaDetailPage } from './pages/RutaDetailPage';
 import { VehiculosPage } from './pages/VehiculosPage';
 import { ConductoresPage } from './pages/ConductoresPage';
+import { EntregasPage } from './pages/EntregasPage';
+import { GpsPage } from './pages/GpsPage';
+import { NotificacionesPage } from './pages/NotificacionesPage';
 import { Layout } from './components/Layout';
 
 function FullScreenLoader() {
@@ -79,6 +82,11 @@ export function App() {
         <Route path="/logistica/rutas/:id" element={<RutaDetailPage />} />
         <Route path="/logistica/vehiculos" element={<VehiculosPage />} />
         <Route path="/logistica/conductores" element={<ConductoresPage />} />
+
+        {/* Fase 5 */}
+        <Route path="/logistica/entregas" element={<EntregasPage />} />
+        <Route path="/logistica/gps" element={<GpsPage />} />
+        <Route path="/notificaciones" element={<NotificacionesPage />} />
 
         <Route path="/:section" element={<PlaceholderPage />} />
         <Route path="/:section/:sub" element={<PlaceholderPage />} />

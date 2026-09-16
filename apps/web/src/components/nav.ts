@@ -72,9 +72,10 @@ export const NAV: NavGroup[] = [
     items: [
       { label: 'Despacho', path: '/logistica/despacho', available: true, fase: 4 },
       { label: 'Rutas', path: '/logistica/rutas', available: true, fase: 4 },
+      { label: 'Entregas', path: '/logistica/entregas', available: true, fase: 5 },
+      { label: 'GPS', path: '/logistica/gps', available: true, fase: 5 },
       { label: 'Vehículos', path: '/logistica/vehiculos', available: true, fase: 4 },
       { label: 'Conductores', path: '/logistica/conductores', available: true, fase: 4 },
-      { label: 'GPS', path: '/logistica/gps', available: false, fase: 5 },
     ],
   },
   {
@@ -91,6 +92,7 @@ export const NAV: NavGroup[] = [
   { label: 'Facturación', icon: '🧾', path: '/facturacion', available: false, fase: 6 },
   { label: 'Reportes', icon: '📊', path: '/reportes', available: false, fase: 7 },
   { label: 'Inteligencia', icon: '🤖', path: '/inteligencia', available: false, fase: 8 },
+  { label: 'Notificaciones', icon: '🔔', path: '/notificaciones', available: true, fase: 5 },
   { label: 'Configuración', icon: '⚙️', path: '/configuracion', available: false, fase: 1 },
   { label: 'Auditoría', icon: '🔐', path: '/auditoria', available: false, fase: 1 },
 ];

@@ -23,6 +23,9 @@ import { FleetModule } from './modules/fleet/fleet.module';
 import { PickingModule } from './modules/picking/picking.module';
 import { QualityModule } from './modules/quality/quality.module';
 import { RoutingModule } from './modules/routing/routing.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { GpsModule } from './modules/gps/gps.module';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 
 @Module({
   imports: [
@@ -54,6 +57,9 @@ import { RoutingModule } from './modules/routing/routing.module';
     PickingModule,
     QualityModule,
     RoutingModule,
+    NotificationsModule,
+    GpsModule,
+    DeliveriesModule,
   ],
   providers: [
     // Orden importante: rate limit → autenticación → autorización RBAC.

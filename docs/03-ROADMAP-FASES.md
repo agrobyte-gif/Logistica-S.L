@@ -96,10 +96,32 @@ es la segunda sub-entrega.
 App para pickers y conductores; escaneo QR/código de barras (§40); offline-first
 para operaciones críticas (§39). La app del conductor con GPS/entregas es Fase 5.
 
-## Fase 5 — GPS, entregas, evidencias y notificaciones
+## Fase 5 — GPS, entregas, evidencias y notificaciones 🚧
 App del conductor; captura de GPS con frecuencia configurable y bajo consumo;
-entregas con firma/foto/geolocalización; rechazos; **colas (Redis/BullMQ)** para
-GPS y notificaciones; centro de notificaciones por rol.
+entregas con firma/foto/geolocalización; rechazos; centro de notificaciones por rol.
+
+**Sub-entrega 5A — Backend + Web (hecha):**
+- [x] Esquema: deliveries, delivery_items, delivery_evidence, gps_positions,
+      notifications (+ enums y relaciones)
+- [x] Contratos compartidos: permisos (DELIVERY/GPS), enums de entrega y
+      `resolveDeliveryStatus` (regla pura ENTREGADO/PARCIAL/RECHAZADO)
+- [x] Backend `deliveries`: registrar entrega con evidencia (firma/foto),
+      actualiza parada + pedido (ENTREGADO/INCIDENCIA), completa la ruta cuando
+      no quedan paradas, y notifica (§29: vendedor si OK, JEFE_OPERACIONES si
+      hay incidencia)
+- [x] Backend `gps`: reporte de posición (soporta lote offline), última posición
+      por ruta en curso, traza histórica
+- [x] Backend `notifications`: notificar por usuario/rol, listar, contar no
+      leídas, marcar leída(s)
+- [x] Web: Entregas, GPS (últimas posiciones, refresco 15s), Notificaciones
+- [x] Tests unit: `resolveDeliveryStatus` (en verde, 31 total)
+- [ ] Verificación e2e contra BD (pendiente de `DATABASE_URL`)
+
+**Pendiente en Fase 5 (infra/decisiones):**
+- [ ] Colas Redis/BullMQ para GPS de alto volumen y notificaciones (requiere
+      Redis; interfaz preparada)
+- [ ] Tiempo real (WebSocket/SSE) y mapa interactivo (requiere proveedor de mapas)
+- [ ] Push a móvil (FCM) — junto con la app del conductor
 
 ## Fase 6 — Caja chica, finanzas y facturación SII
 Caja chica con rendición y cierre; cuentas por cobrar/pagar; **integración de
