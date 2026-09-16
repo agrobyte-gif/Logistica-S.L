@@ -155,10 +155,22 @@ Dashboard gerencial y **Control Tower**; reportes exportables; módulo BI.
 - [x] Verificado contra BD real (KPIs, control-tower y CSV)
 - [ ] Export PDF/XLSX nativo y BI avanzado (rentabilidad por ruta) — futuro
 
-## Fase 8 — Inteligencia artificial
-Predicción de demanda/compras/merma, detección de anomalías, recomendación de
-stock/compras. La IA **asiste y recomienda**; no ejecuta compras críticas sin
-autorización (prompt §32).
+## Fase 8 — Inteligencia artificial ✅
+Recomendación de compras basada en demanda estimada, detección de anomalías y
+análisis de clientes. La IA **asiste y recomienda**; NO ejecuta acciones
+(prompt §32).
+
+- [x] AiService heurístico/estadístico (sin proveedor externo ni credenciales):
+      - Recomendación de compra: estima demanda diaria desde las salidas de
+        inventario (90 días), la proyecta al horizonte y la compara con el
+        disponible; usa stock mínimo/punto de reposición como piso
+      - Detección de anomalías: merma de la semana vs. la previa
+      - Análisis de clientes: frecuencia, ticket promedio, última compra
+- [x] Web: página Inteligencia (recomendaciones, anomalías, clientes)
+- [x] Verificado contra BD real: al dejar Palta bajo mínimo (merma), el motor
+      marca crítico y recomienda comprar; el mensaje sigue el ejemplo del §32
+- [x] Arquitectura lista para sustituir las heurísticas por un modelo/LLM
+      detrás de la misma interfaz, sin tocar controladores ni frontend
 
 ---
 

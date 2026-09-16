@@ -131,6 +131,9 @@ export enum Permission {
   // --- Fase 7: BI, reportes y Control Tower ---
   REPORTS_VIEW = 'reports:view',
   CONTROL_TOWER_VIEW = 'control_tower:view',
+
+  // --- Fase 8: Inteligencia (asistente/recomendador) ---
+  AI_VIEW = 'ai:view',
 }
 
 /** Estado genérico de entidades. */
@@ -177,6 +180,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     // Fase 7: BI y torre de control.
     Permission.REPORTS_VIEW,
     Permission.CONTROL_TOWER_VIEW,
+    // Fase 8: asistente de inteligencia.
+    Permission.AI_VIEW,
   ],
   [RoleName.JEFE_OPERACIONES]: [
     Permission.DASHBOARD_VIEW,
@@ -230,6 +235,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.GOODS_RECEIPT_READ,
     Permission.INVENTORY_READ,
     Permission.INVENTORY_MOVEMENT_READ,
+    // Fase 8: recomendaciones de compra.
+    Permission.AI_VIEW,
   ],
   [RoleName.BODEGUERO]: [
     Permission.DASHBOARD_VIEW,

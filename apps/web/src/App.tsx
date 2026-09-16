@@ -32,6 +32,7 @@ import { CuentasCobrarPage } from './pages/CuentasCobrarPage';
 import { CuentasPagarPage } from './pages/CuentasPagarPage';
 import { ControlTowerPage } from './pages/ControlTowerPage';
 import { ReportesPage } from './pages/ReportesPage';
+import { InteligenciaPage } from './pages/InteligenciaPage';
 import { Layout } from './components/Layout';
 
 function FullScreenLoader() {
@@ -103,6 +104,9 @@ export function App() {
         {/* Fase 7 */}
         <Route path="/control-tower" element={<ControlTowerPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
+
+        {/* Fase 8 */}
+        <Route path="/inteligencia" element={<InteligenciaPage />} />
 
         <Route path="/:section" element={<PlaceholderPage />} />
         <Route path="/:section/:sub" element={<PlaceholderPage />} />

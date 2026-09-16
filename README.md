@@ -16,18 +16,21 @@ Desarrollo por fases (ver [docs/03-ROADMAP-FASES.md](docs/03-ROADMAP-FASES.md)).
 
 | Fase | Contenido | Estado |
 |------|-----------|--------|
-| 1 | Arquitectura, BD, usuarios, roles, autenticación, dashboard básico | ✅ Implementada |
-| 2 | CRM, productos, clientes, proveedores, ventas/pedidos | ✅ Implementada |
-| 3 | Inventario, bodega (WMS), compras, recepción, mermas | ✅ Implementada |
-| 4 | Picking, despacho, rutas (TMS), vehículos, conductores | 🚧 Backend + web (app móvil pendiente) |
-| 5 | GPS, entregas, evidencias, notificaciones | ⏳ Pendiente |
-| 6 | Caja chica, finanzas, facturación (SII) | ⏳ Pendiente |
-| 7 | BI, reportes, KPIs | ⏳ Pendiente |
-| 8 | IA: predicción, optimización, recomendaciones | ⏳ Pendiente |
+| 1 | Arquitectura, BD, usuarios, roles, autenticación, dashboard | ✅ Implementada + verificada |
+| 2 | CRM, productos, clientes, proveedores, ventas/pedidos | ✅ Implementada + verificada |
+| 3 | Inventario, bodega (WMS), compras, recepción, mermas | ✅ Implementada + verificada |
+| 4 | Picking, despacho, rutas (TMS), vehículos, conductores | ✅ Backend + web (app móvil Expo incluida) |
+| 5 | GPS, entregas, evidencias, notificaciones | ✅ Implementada + verificada |
+| 6 | Caja chica, finanzas, facturación (registro DTE / SII manual) | ✅ Implementada + verificada |
+| 7 | BI, reportes, KPIs, Control Tower | ✅ Implementada + verificada |
+| 8 | IA: recomendación de compras, anomalías, análisis de clientes | ✅ Implementada + verificada |
 
-> Nota: las Fases 1–4 compilan (backend y web) y la lógica crítica está cubierta
-> por tests unitarios en verde. La verificación end-to-end contra PostgreSQL
-> queda pendiente de una `DATABASE_URL` disponible.
+> Estado: las 8 fases compilan (backend y web), la lógica crítica está cubierta
+> por tests unitarios en verde (40) y el sistema está **verificado end-to-end
+> contra PostgreSQL** (migración, seed, e2e y smoke de cada fase).
+> Pendientes acotados (infra/decisiones): colas Redis para GPS de alto volumen,
+> tiempo real por WebSocket, mapa interactivo (proveedor de mapas), push FCM y
+> exportación PDF/XLSX nativa. Ver [docs/03](docs/03-ROADMAP-FASES.md).
 
 ## Documentación
 
