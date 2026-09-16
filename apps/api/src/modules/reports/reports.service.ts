@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import ExcelJS from 'exceljs';
+import PDFDocument from 'pdfkit';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 export interface ReportResult {
@@ -207,5 +209,81 @@ export class ReportsService {
       report.columns.map((c) => esc(row[c.key])).join(';'),
     );
     return '﻿' + [header, ...lines].join('\n');
+  }
+
+  /** Serializa un reporte a un libro Excel (.xlsx). */
+  async toXlsx(report: ReportResult, titulo: string): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'AGROGOOD';
+    const ws = wb.addWorksheet(titulo.slice(0, 31)); // límite de nombre de hoja
+    ws.columns = report.columns.map((c) => ({
+      header: c.label,
+      key: c.key,
+      width: Math.max(14, c.label.length + 2),
+    }));
+    ws.getRow(1).font = { bold: true };
+    for (const row of report.rows) ws.addRow(row);
+    const buffer = await wb.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  /** Serializa un reporte a PDF (tabla simple). */
+  toPdf(report: ReportResult, titulo: string): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ size: 'A4', margin: 40, layout: 'landscape' });
+      const chunks: Buffer[] = [];
+      doc.on('data', (c: Buffer) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      doc.fontSize(16).text(`AGROGOOD — ${titulo}`, { align: 'left' });
+      doc.moveDown(0.3);
+      doc
+        .fontSize(9)
+        .fillColor('#666')
+        .text(new Date().toLocaleString('es-CL'));
+      doc.moveDown(0.8);
+      doc.fillColor('#000');
+
+      const pageWidth =
+        doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const colWidth = pageWidth / report.columns.length;
+      const startX = doc.page.margins.left;
+
+      const drawRow = (
+        values: (string | number)[],
+        opts: { bold?: boolean } = {},
+      ) => {
+        const y = doc.y;
+        doc.fontSize(9).font(opts.bold ? 'Helvetica-Bold' : 'Helvetica');
+        values.forEach((v, i) => {
+          doc.text(String(v ?? ''), startX + i * colWidth, y, {
+            width: colWidth - 6,
+            ellipsis: true,
+          });
+        });
+        doc.moveDown(0.6);
+      };
+
+      drawRow(
+        report.columns.map((c) => c.label),
+        { bold: true },
+      );
+      doc
+        .moveTo(startX, doc.y - 2)
+        .lineTo(startX + pageWidth, doc.y - 2)
+        .strokeColor('#ccc')
+        .stroke();
+      doc.moveDown(0.2);
+
+      for (const row of report.rows) {
+        if (doc.y > doc.page.height - doc.page.margins.bottom - 20) {
+          doc.addPage();
+        }
+        drawRow(report.columns.map((c) => row[c.key]));
+      }
+
+      doc.end();
+    });
   }
 }

@@ -42,8 +42,8 @@ export function ReportesPage() {
       .finally(() => setLoading(false));
   }, [sel]);
 
-  async function downloadCsv() {
-    const res = await fetch(`/api/reports/${sel}?format=csv`, {
+  async function download(format: 'csv' | 'xlsx' | 'pdf') {
+    const res = await fetch(`/api/reports/${sel}?format=${format}`, {
       headers: { Authorization: `Bearer ${getAccessToken() ?? ''}` },
       credentials: 'include',
     });
@@ -51,7 +51,7 @@ export function ReportesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${sel}.csv`;
+    a.download = `${sel}.${format}`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -63,9 +63,17 @@ export function ReportesPage() {
         subtitle="Inteligencia de negocio · exporta a CSV/Excel"
         action={
           result && result.rows.length > 0 ? (
-            <Button variant="ghost" onClick={() => void downloadCsv()}>
-              ⬇ Descargar CSV
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => void download('csv')}>
+                ⬇ CSV
+              </Button>
+              <Button variant="ghost" onClick={() => void download('xlsx')}>
+                ⬇ Excel
+              </Button>
+              <Button variant="ghost" onClick={() => void download('pdf')}>
+                ⬇ PDF
+              </Button>
+            </div>
           ) : undefined
         }
       />

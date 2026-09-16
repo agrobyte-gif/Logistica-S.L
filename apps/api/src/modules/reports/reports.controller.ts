@@ -5,6 +5,7 @@ import {
   Param,
   Query,
   Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -31,8 +32,8 @@ export class ReportsController {
 
   @Get(':key')
   @RequirePermissions(Permission.REPORTS_VIEW)
-  @ApiOperation({ summary: 'Ejecutar reporte (JSON o CSV con ?format=csv)' })
-  @ApiQuery({ name: 'format', required: false, enum: ['json', 'csv'] })
+  @ApiOperation({ summary: 'Ejecutar reporte (JSON, CSV, XLSX o PDF)' })
+  @ApiQuery({ name: 'format', required: false, enum: ['json', 'csv', 'xlsx', 'pdf'] })
   async run(
     @CurrentUser() user: AuthUser,
     @Param('key') key: string,
@@ -42,14 +43,28 @@ export class ReportsController {
     const report = await this.reports.run(user.companyId, key);
     if (!report) throw new NotFoundException('Reporte no encontrado');
 
+    const titulo =
+      this.reports.listReports().find((r) => r.key === key)?.label ?? key;
+
     if (format === 'csv') {
-      const csv = this.reports.toCsv(report);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${key}.csv"`);
+      return this.reports.toCsv(report);
+    }
+    if (format === 'xlsx') {
+      const buf = await this.reports.toXlsx(report, titulo);
       res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${key}.csv"`,
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       );
-      return csv;
+      res.setHeader('Content-Disposition', `attachment; filename="${key}.xlsx"`);
+      return new StreamableFile(buf);
+    }
+    if (format === 'pdf') {
+      const buf = await this.reports.toPdf(report, titulo);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${key}.pdf"`);
+      return new StreamableFile(buf);
     }
     return report;
   }

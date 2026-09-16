@@ -153,7 +153,9 @@ Dashboard gerencial y **Control Tower**; reportes exportables; módulo BI.
       motivo, stock/inventario — con **export CSV** (BOM, apto Excel-es)
 - [x] Web: Dashboard renovado, Control Tower, Reportes (con descarga CSV)
 - [x] Verificado contra BD real (KPIs, control-tower y CSV)
-- [ ] Export PDF/XLSX nativo y BI avanzado (rentabilidad por ruta) — futuro
+- [x] Export nativo **XLSX** (exceljs) y **PDF** (pdfkit) además de CSV —
+      verificado (magic bytes PK / %PDF con datos reales)
+- [ ] BI avanzado (rentabilidad por ruta) — futuro
 
 ## Fase 8 — Inteligencia artificial ✅
 Recomendación de compras basada en demanda estimada, detección de anomalías y
