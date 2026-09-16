@@ -68,10 +68,33 @@ solicitud → cotización → aprobación → OC → recepción → stock); mód
 - [ ] Ubicaciones/lotes en detalle, conteos cíclicos, cotizaciones (más adelante)
 - [ ] Verificación e2e contra BD (pendiente de `DATABASE_URL`)
 
-## Fase 4 — Picking, despacho, TMS y app móvil
-App móvil (Expo) para pickers y supervisores; picking con escaneo, faltantes y
-sustituciones; control de calidad; centro de despacho; creación y optimización
-de rutas; asignación de vehículos y conductores.
+## Fase 4 — Picking, despacho, TMS y app móvil 🚧
+Picking con faltantes y sustituciones; control de calidad; centro de despacho;
+creación de rutas; asignación de vehículos y conductores. La app móvil (Expo)
+es la segunda sub-entrega.
+
+**Sub-entrega 4A — Backend + Web (hecha):**
+- [x] Esquema Prisma: `pickings`, `picking_items`, `quality_checks`,
+      `vehicles`, `drivers`, `routes`, `route_stops` (+ enums y relaciones)
+- [x] Contratos compartidos: permisos por rol (PICKER/DESPACHADOR/CONDUCTOR),
+      máquinas de estado de picking y ruta, y reglas puras
+      (`pickingHasUnjustifiedDifference`, `resolvePickingOutcome`)
+- [x] Backend: `fleet` (vehículos/conductores), `picking` (crear, iniciar,
+      actualizar línea, cerrar), `quality` (control previo), `routing`
+      (despacho, rutas, reordenar, salida, cierre)
+- [x] Reglas de negocio (§37): no cerrar picking con diferencias sin
+      justificar; no despachar sin vehículo/conductor/paradas; bloqueo de
+      salida si hay calidad RECHAZADA; salida física de stock por el único
+      punto de mutación (ADR-011); despacho ≡ ruta (ADR-010)
+- [x] Web: Picking (listado + ejecución), Despacho, Rutas (listado + detalle
+      con asignación/salida/cierre), Vehículos, Conductores
+- [x] Tests unit: regla de picking + máquinas de estado (en verde, 27 total)
+- [x] Seed: vehículos y conductores demo
+- [ ] Verificación e2e contra BD (pendiente de `DATABASE_URL`)
+
+**Sub-entrega 4B — App móvil Expo (pendiente):**
+App para pickers y conductores; escaneo QR/código de barras (§40); offline-first
+para operaciones críticas (§39). La app del conductor con GPS/entregas es Fase 5.
 
 ## Fase 5 — GPS, entregas, evidencias y notificaciones
 App del conductor; captura de GPS con frecuencia configurable y bajo consumo;

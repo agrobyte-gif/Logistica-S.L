@@ -13,6 +13,15 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { SalesOrderStatus } from '@agrogood/shared';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
+
+/** Filtros de listado de pedidos (extiende paginación). */
+export class SalesOrderQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ enum: SalesOrderStatus })
+  @IsOptional()
+  @IsEnum(SalesOrderStatus)
+  estado?: SalesOrderStatus;
+}
 
 export class SalesOrderItemDto {
   @ApiProperty()

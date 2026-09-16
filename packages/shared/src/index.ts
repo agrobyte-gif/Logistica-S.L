@@ -87,6 +87,26 @@ export enum Permission {
   // --- Fase 3: Mermas ---
   WASTE_READ = 'waste:read',
   WASTE_CREATE = 'waste:create',
+
+  // --- Fase 4: Picking ---
+  PICKING_READ = 'picking:read',
+  PICKING_CREATE = 'picking:create', // asignar/crear picking a un pedido
+  PICKING_EXECUTE = 'picking:execute', // el picker actualiza y cierra
+
+  // --- Fase 4: Control de calidad ---
+  QUALITY_READ = 'quality:read',
+  QUALITY_CHECK = 'quality:check',
+
+  // --- Fase 4: Despacho y TMS ---
+  DISPATCH_READ = 'dispatch:read',
+  DISPATCH_MANAGE = 'dispatch:manage', // arma rutas, asigna y controla salida
+  ROUTE_READ = 'route:read',
+
+  // --- Fase 4: Vehículos y conductores ---
+  VEHICLE_READ = 'vehicle:read',
+  VEHICLE_MANAGE = 'vehicle:manage',
+  DRIVER_READ = 'driver:read',
+  DRIVER_MANAGE = 'driver:manage',
 }
 
 /** Estado genérico de entidades. */
@@ -116,6 +136,13 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.SUPPLIER_READ,
     Permission.SALES_ORDER_READ,
     Permission.PURCHASE_REQUEST_READ,
+    // Fase 4: visibilidad de operación logística.
+    Permission.PICKING_READ,
+    Permission.QUALITY_READ,
+    Permission.DISPATCH_READ,
+    Permission.ROUTE_READ,
+    Permission.VEHICLE_READ,
+    Permission.DRIVER_READ,
   ],
   [RoleName.JEFE_OPERACIONES]: [
     Permission.DASHBOARD_VIEW,
@@ -137,6 +164,18 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.INVENTORY_MOVEMENT_READ,
     Permission.WASTE_READ,
     Permission.GOODS_RECEIPT_READ,
+    // Fase 4: coordina picking, calidad, despacho y TMS.
+    Permission.PICKING_READ,
+    Permission.PICKING_CREATE,
+    Permission.QUALITY_READ,
+    Permission.QUALITY_CHECK,
+    Permission.DISPATCH_READ,
+    Permission.DISPATCH_MANAGE,
+    Permission.ROUTE_READ,
+    Permission.VEHICLE_READ,
+    Permission.VEHICLE_MANAGE,
+    Permission.DRIVER_READ,
+    Permission.DRIVER_MANAGE,
   ],
   [RoleName.ENCARGADO_COMPRAS]: [
     Permission.DASHBOARD_VIEW,
@@ -166,10 +205,38 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     Permission.PURCHASE_ORDER_READ,
     Permission.WASTE_READ,
     Permission.WASTE_CREATE,
+    // Fase 4: el bodeguero también prepara pedidos y controla calidad.
+    Permission.SALES_ORDER_READ,
+    Permission.PICKING_READ,
+    Permission.PICKING_CREATE,
+    Permission.PICKING_EXECUTE,
+    Permission.QUALITY_READ,
+    Permission.QUALITY_CHECK,
   ],
-  [RoleName.PICKER]: [Permission.DASHBOARD_VIEW],
-  [RoleName.DESPACHADOR]: [Permission.DASHBOARD_VIEW],
-  [RoleName.CONDUCTOR]: [Permission.DASHBOARD_VIEW],
+  [RoleName.PICKER]: [
+    Permission.DASHBOARD_VIEW,
+    // Acceso acotado (prompt §6): solo sus pedidos y el picking.
+    Permission.PRODUCT_READ,
+    Permission.SALES_ORDER_READ,
+    Permission.PICKING_READ,
+    Permission.PICKING_EXECUTE,
+  ],
+  [RoleName.DESPACHADOR]: [
+    Permission.DASHBOARD_VIEW,
+    Permission.SALES_ORDER_READ,
+    Permission.PICKING_READ,
+    Permission.QUALITY_READ,
+    Permission.DISPATCH_READ,
+    Permission.DISPATCH_MANAGE,
+    Permission.ROUTE_READ,
+    Permission.VEHICLE_READ,
+    Permission.DRIVER_READ,
+  ],
+  [RoleName.CONDUCTOR]: [
+    Permission.DASHBOARD_VIEW,
+    // Ve sus rutas asignadas; la app del conductor llega en Fase 5.
+    Permission.ROUTE_READ,
+  ],
   [RoleName.ADMINISTRACION]: [
     Permission.DASHBOARD_VIEW,
     Permission.USER_READ,
@@ -190,6 +257,10 @@ export enum AuditAction {
   // Fase 2
   ORDER_STATE_CHANGE = 'ORDER_STATE_CHANGE',
   PURCHASE_REQUEST_CREATED = 'PURCHASE_REQUEST_CREATED',
+  // Fase 4
+  PICKING_STATE_CHANGE = 'PICKING_STATE_CHANGE',
+  QUALITY_CHECK_RECORDED = 'QUALITY_CHECK_RECORDED',
+  ROUTE_STATE_CHANGE = 'ROUTE_STATE_CHANGE',
 }
 
 // ==========================================================================
@@ -415,4 +486,147 @@ export function requiredApproverRole(
     (t) => monto >= t.desde && (t.hasta === null || monto < t.hasta),
   );
   return tier?.rol ?? RoleName.GERENTE;
+}
+
+// ==========================================================================
+// Fase 4 — Picking, control de calidad, despacho y TMS (rutas)
+// ==========================================================================
+
+/** Estados del proceso de picking (prompt §17). */
+export enum PickingStatus {
+  PENDIENTE = 'PENDIENTE',
+  EN_PROCESO = 'EN_PROCESO',
+  COMPLETADO = 'COMPLETADO',
+  INCOMPLETO = 'INCOMPLETO',
+  CANCELADO = 'CANCELADO',
+}
+
+/** Estado de cada línea de picking (prompt §17). */
+export enum PickingItemStatus {
+  PENDIENTE = 'PENDIENTE',
+  OK = 'OK',
+  FALTANTE = 'FALTANTE',
+  SUSTITUCION = 'SUSTITUCION',
+}
+
+/** Resultado del control de calidad previo al despacho (prompt §18). */
+export enum QualityResult {
+  APROBADO = 'APROBADO',
+  OBSERVADO = 'OBSERVADO',
+  RECHAZADO = 'RECHAZADO',
+}
+
+/** Estado operativo de un vehículo (prompt §20). */
+export enum VehicleStatus {
+  DISPONIBLE = 'DISPONIBLE',
+  EN_RUTA = 'EN_RUTA',
+  MANTENIMIENTO = 'MANTENIMIENTO',
+  INACTIVO = 'INACTIVO',
+}
+
+/** Estados de una ruta de transporte (prompt §20). */
+export enum RouteStatus {
+  PLANIFICADA = 'PLANIFICADA',
+  CARGANDO = 'CARGANDO',
+  EN_RUTA = 'EN_RUTA',
+  COMPLETADA = 'COMPLETADA',
+  CANCELADA = 'CANCELADA',
+}
+
+/** Estado de una parada de la ruta (las entregas y evidencias son Fase 5). */
+export enum RouteStopStatus {
+  PENDIENTE = 'PENDIENTE',
+  EN_RUTA = 'EN_RUTA',
+  ENTREGADO = 'ENTREGADO',
+  INCIDENCIA = 'INCIDENCIA',
+}
+
+/** Transiciones válidas del picking. */
+export const PICKING_TRANSITIONS: Record<PickingStatus, PickingStatus[]> = {
+  [PickingStatus.PENDIENTE]: [PickingStatus.EN_PROCESO, PickingStatus.CANCELADO],
+  [PickingStatus.EN_PROCESO]: [
+    PickingStatus.COMPLETADO,
+    PickingStatus.INCOMPLETO,
+    PickingStatus.CANCELADO,
+  ],
+  [PickingStatus.INCOMPLETO]: [
+    PickingStatus.EN_PROCESO,
+    PickingStatus.COMPLETADO,
+  ],
+  [PickingStatus.COMPLETADO]: [], // terminal
+  [PickingStatus.CANCELADO]: [], // terminal
+};
+
+export function canTransitionPicking(
+  from: PickingStatus,
+  to: PickingStatus,
+): boolean {
+  return PICKING_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+/** Transiciones válidas de una ruta. */
+export const ROUTE_TRANSITIONS: Record<RouteStatus, RouteStatus[]> = {
+  [RouteStatus.PLANIFICADA]: [RouteStatus.CARGANDO, RouteStatus.CANCELADA],
+  [RouteStatus.CARGANDO]: [
+    RouteStatus.EN_RUTA,
+    RouteStatus.PLANIFICADA,
+    RouteStatus.CANCELADA,
+  ],
+  [RouteStatus.EN_RUTA]: [RouteStatus.COMPLETADA],
+  [RouteStatus.COMPLETADA]: [], // terminal
+  [RouteStatus.CANCELADA]: [], // terminal
+};
+
+export function canTransitionRoute(
+  from: RouteStatus,
+  to: RouteStatus,
+): boolean {
+  return ROUTE_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+/** Línea de picking mínima para evaluar diferencias (función pura). */
+export interface PickingItemLike {
+  cantidadSolicitada: number;
+  cantidadPickeada: number;
+  estado: PickingItemStatus;
+  observacion?: string | null;
+}
+
+/** ¿La línea difiere de lo solicitado? (faltante, sustitución o menor cantidad). */
+export function pickingItemHasDifference(it: PickingItemLike): boolean {
+  return (
+    it.estado === PickingItemStatus.FALTANTE ||
+    it.estado === PickingItemStatus.SUSTITUCION ||
+    it.cantidadPickeada !== it.cantidadSolicitada
+  );
+}
+
+/**
+ * Regla de negocio (prompt §17 y §37): no se puede cerrar un picking con
+ * diferencias sin justificar. Una diferencia se considera justificada si la
+ * línea tiene una observación no vacía. Función pura → fácil de testear.
+ */
+export function pickingHasUnjustifiedDifference(
+  items: PickingItemLike[],
+): boolean {
+  return items.some(
+    (it) =>
+      pickingItemHasDifference(it) &&
+      !(it.observacion && it.observacion.trim().length > 0),
+  );
+}
+
+/**
+ * Resultado del cierre de un picking: COMPLETADO si todas las líneas se
+ * pickearon completas y sin faltantes/sustituciones; en caso contrario
+ * INCOMPLETO (prompt §17: "picking incompleto").
+ */
+export function resolvePickingOutcome(
+  items: PickingItemLike[],
+): PickingStatus.COMPLETADO | PickingStatus.INCOMPLETO {
+  const completo = items.every(
+    (it) =>
+      !pickingItemHasDifference(it) && it.estado === PickingItemStatus.OK,
+  );
+  return completo ? PickingStatus.COMPLETADO : PickingStatus.INCOMPLETO;
 }

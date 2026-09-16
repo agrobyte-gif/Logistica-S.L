@@ -16,6 +16,13 @@ import { MermasPage } from './pages/MermasPage';
 import { OrdenesCompraPage } from './pages/OrdenesCompraPage';
 import { NuevaOCPage } from './pages/NuevaOCPage';
 import { OCDetailPage } from './pages/OCDetailPage';
+import { PickingPage } from './pages/PickingPage';
+import { PickingDetailPage } from './pages/PickingDetailPage';
+import { DespachoPage } from './pages/DespachoPage';
+import { RutasPage } from './pages/RutasPage';
+import { RutaDetailPage } from './pages/RutaDetailPage';
+import { VehiculosPage } from './pages/VehiculosPage';
+import { ConductoresPage } from './pages/ConductoresPage';
 import { Layout } from './components/Layout';
 
 function FullScreenLoader() {
@@ -63,6 +70,15 @@ export function App() {
         <Route path="/compras/ordenes" element={<OrdenesCompraPage />} />
         <Route path="/compras/ordenes/nueva" element={<NuevaOCPage />} />
         <Route path="/compras/ordenes/:id" element={<OCDetailPage />} />
+
+        {/* Fase 4 */}
+        <Route path="/bodega/picking" element={<PickingPage />} />
+        <Route path="/bodega/picking/:id" element={<PickingDetailPage />} />
+        <Route path="/logistica/despacho" element={<DespachoPage />} />
+        <Route path="/logistica/rutas" element={<RutasPage />} />
+        <Route path="/logistica/rutas/:id" element={<RutaDetailPage />} />
+        <Route path="/logistica/vehiculos" element={<VehiculosPage />} />
+        <Route path="/logistica/conductores" element={<ConductoresPage />} />
 
         <Route path="/:section" element={<PlaceholderPage />} />
         <Route path="/:section/:sub" element={<PlaceholderPage />} />

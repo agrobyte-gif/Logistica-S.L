@@ -104,7 +104,27 @@ const STATUS_COLORS: Record<string, string> = {
   ESPERANDO_COMPRA: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   RECIBIDO: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300',
   CANCELADO: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  CANCELADA: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
   ENTREGADO: 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200',
+  // Fase 4: picking, despacho y rutas.
+  PENDIENTE: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300',
+  EN_PROCESO: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  EN_PICKING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  PICKING_INCOMPLETO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  INCOMPLETO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  COMPLETADO: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  COMPLETADA: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  PREPARADO: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  PLANIFICADA: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300',
+  CARGANDO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  EN_DESPACHO: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  EN_RUTA: 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200',
+  // Control de calidad.
+  APROBADO: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  OBSERVADO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  RECHAZADO: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  DISPONIBLE_VEH: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  MANTENIMIENTO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
 };
 
 export function StatusBadge({ status }: { status: string }) {

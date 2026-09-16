@@ -13,10 +13,10 @@ import {
   RequirePermissions,
 } from '../../common/auth/decorators';
 import { AuthUser } from '../../common/auth/auth.types';
-import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { SalesService } from './sales.service';
 import {
   CreateSalesOrderDto,
+  SalesOrderQueryDto,
   TransitionOrderDto,
 } from './dto/sales-order.dto';
 
@@ -30,12 +30,8 @@ export class SalesController {
   @RequirePermissions(Permission.SALES_ORDER_READ)
   @ApiOperation({ summary: 'Listar pedidos' })
   @ApiQuery({ name: 'estado', required: false, enum: SalesOrderStatus })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: PaginationQueryDto,
-    @Query('estado') estado?: SalesOrderStatus,
-  ) {
-    return this.sales.findAll(user.companyId, query, estado);
+  findAll(@CurrentUser() user: AuthUser, @Query() query: SalesOrderQueryDto) {
+    return this.sales.findAll(user.companyId, query, query.estado);
   }
 
   @Get(':id')

@@ -16,14 +16,18 @@ Desarrollo por fases (ver [docs/03-ROADMAP-FASES.md](docs/03-ROADMAP-FASES.md)).
 
 | Fase | Contenido | Estado |
 |------|-----------|--------|
-| 1 | Arquitectura, BD, usuarios, roles, autenticación, dashboard básico | 🚧 En curso |
-| 2 | CRM, productos, clientes, proveedores, ventas/pedidos | ⏳ Pendiente |
-| 3 | Inventario, bodega (WMS), compras, recepción, mermas | ⏳ Pendiente |
-| 4 | Picking, despacho, rutas (TMS), conductores, app móvil | ⏳ Pendiente |
+| 1 | Arquitectura, BD, usuarios, roles, autenticación, dashboard básico | ✅ Implementada |
+| 2 | CRM, productos, clientes, proveedores, ventas/pedidos | ✅ Implementada |
+| 3 | Inventario, bodega (WMS), compras, recepción, mermas | ✅ Implementada |
+| 4 | Picking, despacho, rutas (TMS), vehículos, conductores | 🚧 Backend + web (app móvil pendiente) |
 | 5 | GPS, entregas, evidencias, notificaciones | ⏳ Pendiente |
 | 6 | Caja chica, finanzas, facturación (SII) | ⏳ Pendiente |
 | 7 | BI, reportes, KPIs | ⏳ Pendiente |
 | 8 | IA: predicción, optimización, recomendaciones | ⏳ Pendiente |
+
+> Nota: las Fases 1–4 compilan (backend y web) y la lógica crítica está cubierta
+> por tests unitarios en verde. La verificación end-to-end contra PostgreSQL
+> queda pendiente de una `DATABASE_URL` disponible.
 
 ## Documentación
 

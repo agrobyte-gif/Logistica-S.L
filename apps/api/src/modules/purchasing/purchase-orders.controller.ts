@@ -13,11 +13,11 @@ import {
   RequirePermissions,
 } from '../../common/auth/decorators';
 import { AuthUser } from '../../common/auth/auth.types';
-import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import {
   CreatePurchaseOrderDto,
   CreateReceiptDto,
+  PurchaseOrderQueryDto,
 } from './dto/purchase-order.dto';
 
 @ApiTags('purchase-orders')
@@ -30,12 +30,8 @@ export class PurchaseOrdersController {
   @RequirePermissions(Permission.PURCHASE_ORDER_READ)
   @ApiOperation({ summary: 'Listar órdenes de compra' })
   @ApiQuery({ name: 'estado', required: false, enum: PurchaseOrderStatus })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: PaginationQueryDto,
-    @Query('estado') estado?: PurchaseOrderStatus,
-  ) {
-    return this.orders.findAll(user.companyId, query, estado);
+  findAll(@CurrentUser() user: AuthUser, @Query() query: PurchaseOrderQueryDto) {
+    return this.orders.findAll(user.companyId, query, query.estado);
   }
 
   @Get(':id')

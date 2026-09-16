@@ -8,7 +8,11 @@ import {
 import { AuthUser } from '../../common/auth/auth.types';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { InventoryService } from './inventory.service';
-import { AdjustInventoryDto, TransferInventoryDto } from './dto/inventory.dto';
+import {
+  AdjustInventoryDto,
+  MovementsQueryDto,
+  TransferInventoryDto,
+} from './dto/inventory.dto';
 
 @ApiTags('inventory')
 @ApiBearerAuth()
@@ -29,10 +33,9 @@ export class InventoryController {
   @ApiQuery({ name: 'productId', required: false })
   listMovements(
     @CurrentUser() user: AuthUser,
-    @Query() query: PaginationQueryDto,
-    @Query('productId') productId?: string,
+    @Query() query: MovementsQueryDto,
   ) {
-    return this.inventory.listMovements(user.companyId, query, productId);
+    return this.inventory.listMovements(user.companyId, query, query.productId);
   }
 
   @Post('adjust')

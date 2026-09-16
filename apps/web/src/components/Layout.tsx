@@ -132,7 +132,7 @@ export function Layout({ children }: { children: ReactNode }) {
         ))}
       </nav>
       <div className="border-t border-neutral-200 p-3 text-[11px] text-neutral-400 dark:border-neutral-800">
-        Fase 1 · v0.1.0
+        Fase 4 · v0.1.0
       </div>
     </div>
   );

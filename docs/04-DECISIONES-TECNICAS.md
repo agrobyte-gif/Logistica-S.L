@@ -116,6 +116,32 @@ principio de trazabilidad total.
 **Impacto futuro:** auditoría de stock reconstruible en cualquier fecha
 (valorización histórica, quiebres).
 
+## ADR-010 — La ruta unifica el "despacho" (Fase 4) ✅
+**Qué:** no existe una tabla `dispatches` separada; una **ruta** (`routes` +
+`route_stops`) representa el despacho — un vehículo, un conductor y una carga
+con paradas ordenadas. El "Centro de despacho" (§19) es la vista que agrupa
+pedidos PREPARADOS y crea la ruta; "controlar salida" es la transición
+`CARGANDO → EN_RUTA` (`routes/:id/depart`).
+**Por qué:** despacho (§19) y rutas (§20) describen el mismo artefacto físico;
+una entidad separada duplicaría datos (prompt §43: no duplicar) sin aportar.
+**Alternativa:** tabla `dispatches` 1:N con `routes` (un despacho, varios
+vehículos). Se puede introducir más adelante sin romper el modelo (la ruta ya
+es la unidad atómica de carga).
+**Impacto futuro:** si se requiere consolidar varias rutas bajo un mismo evento
+de despacho, se agrega `dispatches` como agregador por encima de `routes`.
+
+## ADR-011 — La salida física de stock ocurre al despachar ✅
+**Qué:** el picking **no** mueve stock; al "controlar salida" de la ruta se
+registra un movimiento `DESPACHO` (por lo confirmado en cada línea) vía el único
+punto de mutación (`InventoryService.applyMovement`) y se libera la reserva.
+**Por qué:** el stock físico deja la bodega cuando el camión sale, no antes; así
+`cantidad_fisica` refleja la realidad y `applyMovement` impide despachar más de
+lo disponible (§37: "no despachar pedido no preparado / sin stock").
+**Limitación conocida:** la consistencia de `cantidad_reservada` depende del
+camino del pedido (los que pasaron por `ESPERANDO_COMPRA` no reservaron en
+Fase 2); la liberación usa `GREATEST(0, …)` para no quedar negativa. Se
+endurecerá al revisar la reserva de pedidos re-confirmados.
+
 ---
 
 ## Decisiones que requieren confirmación del cliente (bloqueantes de fase)

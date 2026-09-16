@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -10,6 +11,16 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { PurchaseOrderStatus } from '@agrogood/shared';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
+
+/** Filtros de listado de órdenes de compra. */
+export class PurchaseOrderQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ enum: PurchaseOrderStatus })
+  @IsOptional()
+  @IsEnum(PurchaseOrderStatus)
+  estado?: PurchaseOrderStatus;
+}
 
 export class PurchaseOrderItemDto {
   @ApiProperty()

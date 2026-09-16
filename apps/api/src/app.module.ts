@@ -19,6 +19,10 @@ import { SalesModule } from './modules/sales/sales.module';
 import { PurchasingModule } from './modules/purchasing/purchasing.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { WasteModule } from './modules/waste/waste.module';
+import { FleetModule } from './modules/fleet/fleet.module';
+import { PickingModule } from './modules/picking/picking.module';
+import { QualityModule } from './modules/quality/quality.module';
+import { RoutingModule } from './modules/routing/routing.module';
 
 @Module({
   imports: [
@@ -46,6 +50,10 @@ import { WasteModule } from './modules/waste/waste.module';
     PurchasingModule,
     InventoryModule,
     WasteModule,
+    FleetModule,
+    PickingModule,
+    QualityModule,
+    RoutingModule,
   ],
   providers: [
     // Orden importante: rate limit → autenticación → autorización RBAC.

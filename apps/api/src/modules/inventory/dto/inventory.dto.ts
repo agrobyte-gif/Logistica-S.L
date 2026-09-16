@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsPositive, IsString, Length } from 'class-validator';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
+
+/** Filtros del libro mayor de inventario. */
+export class MovementsQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ description: 'Filtrar por producto' })
+  @IsOptional()
+  @IsString()
+  productId?: string;
+}
 
 export class AdjustInventoryDto {
   @ApiProperty()

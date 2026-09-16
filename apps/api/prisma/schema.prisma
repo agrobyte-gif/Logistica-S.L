@@ -50,6 +50,13 @@ model Company {
   goodsReceipts      GoodsReceipt[]
   waste              Waste[]
 
+  // Fase 4
+  pickings       Picking[]
+  qualityChecks  QualityCheck[]
+  vehicles       Vehicle[]
+  drivers        Driver[]
+  routes         Route[]
+
   @@unique([rut])
   @@map("companies")
 }
@@ -73,6 +80,7 @@ model Warehouse {
   inventoryMovements InventoryMovement[]
   goodsReceipts  GoodsReceipt[]
   waste          Waste[]
+  pickings       Picking[]
 
   @@index([companyId])
   @@map("warehouses")
@@ -444,6 +452,8 @@ model Product {
   purchaseOrderItems PurchaseOrderItem[]
   goodsReceiptItems  GoodsReceiptItem[]
   waste              Waste[]
+  pickingItems          PickingItem[] @relation("PickingItemProduct")
+  pickingItemsSustituto PickingItem[] @relation("PickingItemSustituto")
 
   @@unique([companyId, sku])
   @@index([companyId, estado])
@@ -546,6 +556,9 @@ model SalesOrder {
   vendedor         User?            @relation("SalesOrderVendedor", fields: [vendedorId], references: [id], onDelete: SetNull)
   items            SalesOrderItem[]
   purchaseRequests PurchaseRequest[]
+  pickings         Picking[]
+  qualityChecks    QualityCheck[]
+  routeStops       RouteStop[]
 
   @@unique([companyId, numero])
   @@index([companyId, estado])
@@ -565,6 +578,7 @@ model SalesOrderItem {
 
   salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
   product    Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  pickingItems PickingItem[]
 
   @@index([salesOrderId])
   @@map("sales_order_items")
@@ -774,4 +788,211 @@ model Waste {
   @@index([companyId, createdAt])
   @@index([productId])
   @@map("waste")
+}
+
+// ==========================================================================
+// Fase 4 — Picking, control de calidad, despacho y TMS (rutas)
+// ==========================================================================
+
+enum PickingStatus {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADO
+  INCOMPLETO
+  CANCELADO
+}
+
+enum PickingItemStatus {
+  PENDIENTE
+  OK
+  FALTANTE
+  SUSTITUCION
+}
+
+enum QualityResult {
+  APROBADO
+  OBSERVADO
+  RECHAZADO
+}
+
+enum VehicleStatus {
+  DISPONIBLE
+  EN_RUTA
+  MANTENIMIENTO
+  INACTIVO
+}
+
+enum RouteStatus {
+  PLANIFICADA
+  CARGANDO
+  EN_RUTA
+  COMPLETADA
+  CANCELADA
+}
+
+enum RouteStopStatus {
+  PENDIENTE
+  EN_RUTA
+  ENTREGADO
+  INCIDENCIA
+}
+
+/// Picking de un pedido (prompt §17). Un pedido tiene a lo sumo un picking
+/// activo. El `pickerId` es un usuario (se guarda como string, como el resto de
+/// referencias operativas a usuario del sistema).
+model Picking {
+  id            String        @id @default(uuid())
+  companyId     String        @map("company_id")
+  numero        String
+  salesOrderId  String        @map("sales_order_id")
+  warehouseId   String        @map("warehouse_id")
+  pickerId      String?       @map("picker_id")
+  estado        PickingStatus @default(PENDIENTE)
+  iniciadoAt    DateTime?     @map("iniciado_at")
+  completadoAt  DateTime?     @map("completado_at")
+  observaciones String?
+  createdById   String?       @map("created_by")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salesOrder SalesOrder    @relation(fields: [salesOrderId], references: [id], onDelete: Restrict)
+  warehouse  Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items      PickingItem[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, estado])
+  @@index([salesOrderId])
+  @@map("pickings")
+}
+
+model PickingItem {
+  id                  String            @id @default(uuid())
+  pickingId           String            @map("picking_id")
+  productId           String            @map("product_id")
+  salesOrderItemId    String?           @map("sales_order_item_id")
+  cantidadSolicitada  Decimal           @map("cantidad_solicitada") @db.Decimal(14, 3)
+  cantidadPickeada    Decimal           @default(0) @map("cantidad_pickeada") @db.Decimal(14, 3)
+  estado              PickingItemStatus @default(PENDIENTE)
+  productoSustitutoId String?           @map("producto_sustituto_id")
+  fotoUrl             String?           @map("foto_url")
+  observacion         String?
+
+  picking          Picking         @relation(fields: [pickingId], references: [id], onDelete: Cascade)
+  product          Product         @relation("PickingItemProduct", fields: [productId], references: [id], onDelete: Restrict)
+  productoSustituto Product?       @relation("PickingItemSustituto", fields: [productoSustitutoId], references: [id], onDelete: SetNull)
+  salesOrderItem   SalesOrderItem? @relation(fields: [salesOrderItemId], references: [id], onDelete: SetNull)
+
+  @@index([pickingId])
+  @@map("picking_items")
+}
+
+/// Control de calidad previo al despacho (prompt §18). Append-only.
+model QualityCheck {
+  id            String        @id @default(uuid())
+  companyId     String        @map("company_id")
+  salesOrderId  String        @map("sales_order_id")
+  pickingId     String?       @map("picking_id")
+  resultado     QualityResult
+  cantidadOk    Boolean       @default(true) @map("cantidad_ok")
+  calidadOk     Boolean       @default(true) @map("calidad_ok")
+  embalajeOk    Boolean       @default(true) @map("embalaje_ok")
+  temperaturaOk Boolean?      @map("temperatura_ok")
+  observaciones String?
+  revisadoPor   String?       @map("revisado_por")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, createdAt])
+  @@index([salesOrderId])
+  @@map("quality_checks")
+}
+
+/// Vehículo de reparto (prompt §20, §42).
+model Vehicle {
+  id          String        @id @default(uuid())
+  companyId   String        @map("company_id")
+  patente     String
+  tipo        String?
+  marca       String?
+  capacidadKg Decimal?      @map("capacidad_kg") @db.Decimal(12, 2)
+  estado      VehicleStatus @default(DISPONIBLE)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  routes  Route[]
+
+  @@unique([companyId, patente])
+  @@index([companyId, estado])
+  @@map("vehicles")
+}
+
+/// Conductor (prompt §20, §42). `userId` enlaza opcionalmente a un usuario del
+/// sistema (para la app del conductor de la Fase 5).
+model Driver {
+  id        String       @id @default(uuid())
+  companyId String       @map("company_id")
+  userId    String?      @map("user_id")
+  nombre    String
+  licencia  String?
+  telefono  String?
+  estado    EntityStatus @default(ACTIVO)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  routes  Route[]
+
+  @@index([companyId, estado])
+  @@map("drivers")
+}
+
+/// Ruta de transporte (prompt §20). Unifica el "centro de despacho" (§19): una
+/// ruta representa un despacho — un vehículo, un conductor y una carga con
+/// paradas ordenadas. Ver decisión técnica en docs/04.
+model Route {
+  id              String      @id @default(uuid())
+  companyId       String      @map("company_id")
+  numero          String
+  fecha           DateTime    @default(now())
+  vehicleId       String?     @map("vehicle_id")
+  driverId        String?     @map("driver_id")
+  estado          RouteStatus @default(PLANIFICADA)
+  cargaConfirmada Boolean     @default(false) @map("carga_confirmada")
+  salidaAt        DateTime?   @map("salida_at")
+  horaEstimada    DateTime?   @map("hora_estimada")
+  distanciaKm     Decimal?    @map("distancia_km") @db.Decimal(10, 2)
+  notas           String?
+  createdById     String?     @map("created_by")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  vehicle Vehicle?    @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  driver  Driver?     @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  stops   RouteStop[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, estado])
+  @@map("routes")
+}
+
+model RouteStop {
+  id           String          @id @default(uuid())
+  routeId      String          @map("route_id")
+  salesOrderId String          @map("sales_order_id")
+  orden        Int
+  estado       RouteStopStatus @default(PENDIENTE)
+  notas        String?
+
+  route      Route      @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Restrict)
+
+  @@unique([routeId, salesOrderId])
+  @@index([routeId])
+  @@index([salesOrderId])
+  @@map("route_stops")
 }

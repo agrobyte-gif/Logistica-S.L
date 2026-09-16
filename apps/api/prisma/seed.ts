@@ -296,6 +296,50 @@ async function main(): Promise<void> {
     }
   }
 
+  // ------------------------------------------------------------------
+  // Fase 4: vehículos y conductores demo (flota)
+  // ------------------------------------------------------------------
+  const vehiculos: [string, string, number][] = [
+    ['GJKL-45', 'Camión refrigerado', 3500],
+    ['HXTR-12', 'Furgón', 1200],
+  ];
+  for (const [patente, tipo, capacidadKg] of vehiculos) {
+    await prisma.vehicle.upsert({
+      where: { companyId_patente: { companyId: company.id, patente } },
+      update: {},
+      create: { companyId: company.id, patente, tipo, capacidadKg },
+    });
+  }
+
+  // Conductor demo enlazado al usuario CONDUCTOR (para la app de la Fase 5).
+  const conductorUser = await prisma.user.findFirst({
+    where: { companyId: company.id, email: ROLE_USERS[RoleName.CONDUCTOR].email },
+    select: { id: true },
+  });
+  const yaHayConductores = await prisma.driver.findFirst({
+    where: { companyId: company.id },
+    select: { id: true },
+  });
+  if (!yaHayConductores) {
+    await prisma.driver.create({
+      data: {
+        companyId: company.id,
+        nombre: 'Conductor Demo',
+        licencia: 'A-4',
+        telefono: '+56 9 1234 5678',
+        userId: conductorUser?.id,
+      },
+    });
+    await prisma.driver.create({
+      data: {
+        companyId: company.id,
+        nombre: 'Pedro Soto',
+        licencia: 'A-2',
+        telefono: '+56 9 8765 4321',
+      },
+    });
+  }
+
   console.log('✔ Datos demo listos.');
   console.log(`  Empresa RUT: ${COMPANY_RUT}`);
   console.log(`  Usuarios: ${Object.values(ROLE_USERS).map((u) => u.email).join(', ')}`);
