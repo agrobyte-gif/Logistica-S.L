@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancela runs anteriores del mismo ref si llega uno nuevo.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build + tests (unit + e2e con Postgres)
+    runs-on: ubuntu-latest
+
+    # Postgres real (con PostGIS para el GPS de Fase 5) como servicio del runner.
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: agrogood
+          POSTGRES_PASSWORD: agrogood_dev
+          POSTGRES_DB: agrogood
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U agrogood -d agrogood"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://agrogood:agrogood_dev@localhost:5432/agrogood?schema=public
+      # Secretos de prueba (NO son de producción; los reales van en el host).
+      JWT_ACCESS_SECRET: ci-access-secret-not-for-prod
+      JWT_REFRESH_SECRET: ci-refresh-secret-not-for-prod
+      SEED_DEMO_PASSWORD: Agrogood.2026
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar paquete compartido
+        run: npm run build:shared
+
+      - name: Prisma generate + aplicar esquema
+        working-directory: apps/api
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate
+
+      - name: Sembrar datos demo
+        working-directory: apps/api
+        run: npm run db:seed
+
+      - name: Build API
+        run: npm run build --workspace @agrogood/api
+
+      - name: Build web
+        run: npm run build --workspace @agrogood/web
+
+      - name: Tests unitarios (API)
+        working-directory: apps/api
+        run: npx jest --ci
+
+      - name: Tests e2e (API contra Postgres)
+        working-directory: apps/api
+        run: npx jest --config test/jest-e2e.json --ci --runInBand
+
+  mobile-typecheck:
+    name: Typecheck app móvil (informativo)
+    runs-on: ubuntu-latest
+    # No bloquea el merge: la app Expo requiere tipos generados por el router.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck --workspace @agrogood/mobile
