@@ -31,8 +31,14 @@ Navegador ──HTTPS──▶  Vercel (web, SPA React/Vite)
    ```sql
    CREATE EXTENSION IF NOT EXISTS postgis;
    ```
-3. Copia la connection string **pooled** (la que lleva `-pooler` en el host) y
-   añádele `?sslmode=require`. Será tu `DATABASE_URL`.
+3. Copia la connection string y añádele `?sslmode=require`. Será tu
+   `DATABASE_URL`.
+   - **Para el primer despliegue usa la cadena DIRECTA** (la que **no** lleva
+     `-pooler` en el host): funciona tanto para `prisma db push` como para la
+     app. La cadena *pooled* (PgBouncer) puede romper `db push`/`migrate`.
+   - *Optimización posterior*: usar la *pooled* como `DATABASE_URL` y la directa
+     como `directUrl` en el `datasource` de Prisma (requiere tocar
+     `schema.prisma`, coordinar con el resto del equipo).
 
 > El problema del `template1` contaminado que bloqueaba `prisma migrate dev` en
 > local **no aplica en Neon** (su template está limpio).
