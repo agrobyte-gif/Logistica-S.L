@@ -6,6 +6,7 @@ import configuration from './config/configuration';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuditModule } from './common/audit/audit.module';
 import { SequenceModule } from './common/sequence/sequence.module';
+import { RealtimeModule } from './common/realtime/realtime.module';
 import { JwtAuthGuard } from './common/auth/jwt-auth.guard';
 import { RbacGuard } from './common/auth/rbac.guard';
 import { AuthModule } from './modules/auth/auth.module';
@@ -47,6 +48,7 @@ import { AiModule } from './modules/ai/ai.module';
     PrismaModule,
     AuditModule,
     SequenceModule,
+    RealtimeModule,
     AuthModule,
     UsersModule,
     HealthModule,

@@ -1,20 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RealtimeService } from '../../common/realtime/realtime.service';
 import { ReportGpsDto } from './dto/gps.dto';
 
 @Injectable()
 export class GpsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeService,
+  ) {}
 
   /** Registra una posición reportada por la app del conductor. */
   async report(companyId: string, userId: string, dto: ReportGpsDto) {
     const route = await this.prisma.route.findFirst({
       where: { id: dto.routeId, companyId },
-      select: { id: true, vehicleId: true, driverId: true },
+      select: { id: true, vehicleId: true, driverId: true, numero: true },
     });
     if (!route) throw new BadRequestException('Ruta no válida');
 
-    return this.prisma.gpsPosition.create({
+    const pos = await this.prisma.gpsPosition.create({
       data: {
         companyId,
         routeId: route.id,
@@ -27,6 +31,18 @@ export class GpsService {
         recordedAt: dto.recordedAt ? new Date(dto.recordedAt) : undefined,
       },
     });
+
+    // Empuje en tiempo real a la empresa (mapa/Control Tower).
+    this.realtime.emitToCompany(companyId, 'gps:update', {
+      routeId: route.id,
+      numero: route.numero,
+      lat: Number(pos.lat),
+      lng: Number(pos.lng),
+      velocidad: pos.velocidad != null ? Number(pos.velocidad) : null,
+      recordedAt: pos.recordedAt,
+    });
+
+    return pos;
   }
 
   /** Última posición conocida de cada ruta activa (para el mapa/Control Tower). */

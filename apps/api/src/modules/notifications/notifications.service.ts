@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationLevel, RoleName } from '@agrogood/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RealtimeService } from '../../common/realtime/realtime.service';
 import {
   paginate,
   PaginationQueryDto,
@@ -22,7 +23,10 @@ export interface NotifyPayload {
  */
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeService,
+  ) {}
 
   /** Notifica a un usuario concreto. */
   async notifyUser(
@@ -41,6 +45,12 @@ export class NotificationsService {
         entityType: p.entityType,
         entityId: p.entityId,
       },
+    });
+    // Empuje en tiempo real al usuario.
+    this.realtime.emitToUser(userId, 'notification', {
+      nivel: p.nivel ?? NotificationLevel.INFO,
+      titulo: p.titulo,
+      cuerpo: p.cuerpo,
     });
   }
 
@@ -74,6 +84,13 @@ export class NotificationsService {
         entityId: p.entityId,
       })),
     });
+    for (const u of users) {
+      this.realtime.emitToUser(u.id, 'notification', {
+        nivel: p.nivel ?? NotificationLevel.INFO,
+        titulo: p.titulo,
+        cuerpo: p.cuerpo,
+      });
+    }
   }
 
   async listMine(companyId: string, userId: string, query: PaginationQueryDto) {

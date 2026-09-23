@@ -23,6 +23,12 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      // WebSocket de tiempo real (socket.io) por el mismo origen.
+      '/socket.io': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        ws: true,
+      },
       '/health': {
         target: 'http://localhost:3000',
         changeOrigin: true,

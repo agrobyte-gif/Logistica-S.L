@@ -6,7 +6,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { api, setAccessToken } from '../api/client';
+import { api, getAccessToken, setAccessToken } from '../api/client';
+import { connectRealtime, disconnectRealtime } from '../api/realtime';
 
 export interface CurrentUser {
   id: string;
@@ -46,7 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (refreshed && active) {
         try {
           const me = await api.get<CurrentUser>('/users/me');
-          if (active) setUser(me);
+          if (active) {
+            setUser(me);
+            const tk = getAccessToken();
+            if (tk) connectRealtime(tk);
+          }
         } catch {
           if (active) setUser(null);
         }
@@ -65,12 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     setAccessToken(res.accessToken);
     setUser(res.user);
+    connectRealtime(res.accessToken);
   }, []);
 
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } finally {
+      disconnectRealtime();
       setAccessToken(null);
       setUser(null);
     }

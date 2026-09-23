@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api/client';
+import { onRealtime } from '../api/realtime';
 import { PageHeader } from '../components/ui';
 import { RouteMap, type MapMarker } from '../components/RouteMap';
 
@@ -20,7 +21,7 @@ export function GpsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Refresco periódico ligero (sin WebSocket todavía; ver docs/05 C5).
+    // Carga inicial + refresco periódico de respaldo (por si se pierde el WS).
     let active = true;
     const load = () =>
       api
@@ -36,11 +37,44 @@ export function GpsPage() {
     };
   }, []);
 
+  // Actualización en vivo por WebSocket: el backend emite `gps:update` a la
+  // empresa cada vez que un conductor reporta posición.
+  const applyLiveUpdate = useCallback((payload: unknown) => {
+    const p = payload as {
+      routeId: string;
+      numero: string;
+      lat: number;
+      lng: number;
+      velocidad?: number | null;
+      recordedAt: string;
+    };
+    if (!p?.routeId) return;
+    setRows((prev) => {
+      const next: LatestPos = {
+        routeId: p.routeId,
+        numero: p.numero,
+        position: {
+          lat: p.lat,
+          lng: p.lng,
+          velocidad: p.velocidad ?? null,
+          recordedAt: p.recordedAt,
+        },
+      };
+      const idx = prev.findIndex((r) => r.routeId === p.routeId);
+      if (idx === -1) return [...prev, next];
+      const copy = prev.slice();
+      copy[idx] = next;
+      return copy;
+    });
+  }, []);
+
+  useEffect(() => onRealtime('gps:update', applyLiveUpdate), [applyLiveUpdate]);
+
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader
         title="GPS · rutas en curso"
-        subtitle="Última posición reportada por cada vehículo (refresco cada 15s)"
+        subtitle="Última posición de cada vehículo, en vivo (WebSocket)"
       />
 
       {error && (
